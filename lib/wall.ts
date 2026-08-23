@@ -1,4 +1,7 @@
+import "server-only";
+
 import { kv } from "@/lib/kv";
+import nodemailer from "nodemailer";
 
 export interface WallMessage {
   id: string;
@@ -94,6 +97,70 @@ export async function listMessages(opts?: {
   return { data: page, total };
 }
 
+function escapeHtml(s: string): string {
+  return s
+    .replace(/&/g, "&amp;")
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;")
+    .replace(/"/g, "&quot;")
+    .replace(/'/g, "&#39;");
+}
+
+export async function sendWallMailNotice(message: WallMessage): Promise<void> {
+  const host = process.env.SMTP_HOST;
+  const port = Number(process.env.SMTP_PORT || "465");
+  const user = process.env.SMTP_USER;
+  const pass = process.env.SMTP_PASS;
+  const to = process.env.SMTP_TO;
+  if (!host || !user || !pass || !to) {
+    console.warn("SMTP env missing, skip wall mail");
+    return;
+  }
+
+  const transporter = nodemailer.createTransport({
+    host,
+    port,
+    secure: port === 465,
+    auth: { user, pass },
+  });
+
+  const typeLabel = message.parentId ? "回复" : "留言";
+  const lines = [
+    `昵称：${message.nickname}`,
+    `类型：${typeLabel}`,
+    `内容：${message.content}`,
+    `提交时间：${new Date(message.createdAt).toLocaleString("zh-CN")}`,
+  ];
+
+  const html = `
+    <div style="font-family:-apple-system,'PingFang SC',sans-serif;max-width:560px;margin:0 auto;border:1px solid #e5e7eb;border-radius:12px;overflow:hidden">
+      <div style="background:linear-gradient(135deg,#D90429,#00C8FF);padding:20px 24px;color:#fff">
+        <div style="font-size:14px;letter-spacing:.2em;opacity:.85">YZ CONTROL · MESSAGE WALL</div>
+        <div style="font-size:20px;font-weight:800;margin-top:4px">收到一条新${typeLabel}，待审核</div>
+      </div>
+      <div style="padding:20px 24px;font-size:14px;line-height:2;color:#111">
+        ${lines
+          .map(
+            (l) =>
+              `<div style="border-bottom:1px solid #f3f4f6;padding:4px 0">${escapeHtml(l)}</div>`
+          )
+          .join("")}
+      </div>
+      <div style="padding:12px 24px;background:#f9fafb;color:#6b7280;font-size:12px;text-align:center">
+        请登录后台进行审核：yz-control.top/portal/admin/wall
+      </div>
+    </div>
+  `;
+
+  await transporter.sendMail({
+    from: `"YZ Control 留言墙" <${user}>`,
+    to,
+    subject: `【新${typeLabel}待审核】${message.nickname}`,
+    text: lines.join("\n") + "\n\n请登录后台进行审核：yz-control.top/portal/admin/wall",
+    html,
+  });
+}
+
 export async function createMessage(input: {
   nickname: string;
   content: string;
@@ -110,6 +177,9 @@ export async function createMessage(input: {
   };
   await kv.lpush(MSG_KEY, msg.id);
   await kv.set(`${META_PREFIX}${msg.id}`, msg);
+  sendWallMailNotice(msg).catch((err) => {
+    console.error("wall mail notice failed:", err);
+  });
   return msg;
 }
 
