@@ -30,7 +30,7 @@ export default function AdminUserCreator({
     name: "",
     password: "",
     group: DEFAULT_TEAM_GROUP,
-    role: "member" as UserRole,
+    role: "admin" as UserRole,
   });
   const [loading, setLoading] = useState(false);
   const [updatingId, setUpdatingId] = useState<string | null>(null);
@@ -132,7 +132,7 @@ export default function AdminUserCreator({
         name: "",
         password: "",
         group: DEFAULT_TEAM_GROUP,
-        role: "member",
+        role: "admin",
       });
     } catch (e) {
       setError((e as Error).message);
