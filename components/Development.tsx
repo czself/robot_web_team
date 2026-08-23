@@ -19,7 +19,7 @@ export default function Development() {
   const isInView = useInView(ref, { once: true, margin: "-100px" });
 
   return (
-    <section className="relative py-32 px-6 overflow-hidden">
+    <section className="relative py-20 px-6 overflow-hidden">
       <div className="absolute inset-0">
         <Image
           src="/images/gallery/gallery-04.jpg"
@@ -37,7 +37,7 @@ export default function Development() {
           initial={{ opacity: 0, y: 40 }}
           animate={isInView ? { opacity: 1, y: 0 } : {}}
           transition={{ duration: 0.8 }}
-          className="text-center mb-16"
+          className="text-center mb-12"
         >
           <p className="text-sm tracking-[0.3em] uppercase mb-4">
             <span className="text-rm-red">Develop</span>{" "}

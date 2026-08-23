@@ -1,4 +1,4 @@
-export const MIN_PASSWORD_LENGTH = 10;
+export const MIN_PASSWORD_LENGTH = 6;
 
 export function validatePassword(password: string): string | null {
   if (password.length < MIN_PASSWORD_LENGTH || password.length > 72) {

@@ -56,6 +56,8 @@ export default async function PortalPage() {
   }
 
   const resources = await listResources();
+  const categoryCount = new Set(resources.map((r) => r.category)).size;
+  const levelCount = new Set(resources.map((r) => r.level)).size;
 
   return (
     <div className="space-y-8">
@@ -90,14 +92,12 @@ export default async function PortalPage() {
           <div className="mt-1 text-sm text-rm-gray">资料条目</div>
         </div>
         <div className="rounded-lg border border-white/10 bg-white/[0.03] p-5">
-          <div className="font-mono text-3xl font-black text-rm-blue">6</div>
+          <div className="font-mono text-3xl font-black text-rm-blue">{categoryCount}</div>
           <div className="mt-1 text-sm text-rm-gray">资料分类</div>
         </div>
         <div className="rounded-lg border border-white/10 bg-white/[0.03] p-5">
-          <div className="font-mono text-3xl font-black text-rm-red">
-            {user.username}
-          </div>
-          <div className="mt-1 text-sm text-rm-gray">当前账号</div>
+          <div className="font-mono text-3xl font-black text-white">{levelCount}</div>
+          <div className="mt-1 text-sm text-rm-gray">资料等级</div>
         </div>
       </div>
 

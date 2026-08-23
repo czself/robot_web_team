@@ -17,10 +17,14 @@ export default function About() {
   const isInView = useInView(ref, { once: true, margin: "-100px" });
 
   return (
-    <section id="about" className="relative py-32 px-6 overflow-hidden">
-      <div className="absolute inset-0 bg-grid opacity-20" />
+    <section id="about" className="relative py-20 px-6 overflow-hidden">
+      <div className="absolute inset-0 bg-grid opacity-25" />
       <div
         className="absolute top-1/2 -right-40 w-[28rem] h-[28rem] rounded-full bg-rm-red/10 blur-[140px] pointer-events-none"
+        aria-hidden
+      />
+      <div
+        className="absolute bottom-0 -left-20 w-[20rem] h-[20rem] rounded-full bg-rm-blue/8 blur-[120px] pointer-events-none"
         aria-hidden
       />
 
@@ -29,7 +33,7 @@ export default function About() {
           initial={{ opacity: 0, y: 40 }}
           animate={isInView ? { opacity: 1, y: 0 } : {}}
           transition={{ duration: 0.8 }}
-          className="text-center mb-20"
+          className="text-center mb-12"
         >
           <p className="text-sm tracking-[0.3em] uppercase mb-4">
             <span className="text-rm-red">About</span>{" "}
@@ -43,7 +47,7 @@ export default function About() {
           </h2>
         </motion.div>
 
-        <div className="grid grid-cols-1 lg:grid-cols-[1fr_1.6fr] gap-10 items-center mb-20">
+        <div className="grid grid-cols-1 lg:grid-cols-[1fr_1.6fr] gap-10 items-center mb-12">
           <motion.a
             href="/about"
             initial={{ opacity: 0, scale: 0.9 }}

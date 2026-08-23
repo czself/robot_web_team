@@ -10,15 +10,19 @@ export default function Team() {
   const [expandedId, setExpandedId] = useState<string | null>(null);
 
   return (
-    <section id="team" className="relative py-32 px-6 overflow-hidden">
+    <section id="team" className="relative py-20 px-6 overflow-hidden">
       <div className="absolute inset-0 bg-radial-blue opacity-50" />
+      <div
+        className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[32rem] h-[32rem] rounded-full bg-rm-red/5 blur-[160px] pointer-events-none"
+        aria-hidden
+      />
 
       <div className="max-w-7xl mx-auto relative" ref={ref}>
         <motion.div
           initial={{ opacity: 0, y: 40 }}
           animate={isInView ? { opacity: 1, y: 0 } : {}}
           transition={{ duration: 0.8 }}
-          className="text-center mb-16"
+          className="text-center mb-12"
         >
           <p className="text-sm tracking-[0.3em] uppercase mb-4">
             <span className="text-rm-red">Our</span>{" "}

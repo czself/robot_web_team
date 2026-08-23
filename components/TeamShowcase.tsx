@@ -25,7 +25,8 @@ const rowOffsets = [
   "ml-[6%] md:ml-[12%]",
 ];
 
-const TEAMS_PER_ROW = 7;
+const TEAMS_PER_ROW = 5;
+const MAX_ROWS = 5;
 
 function shuffleTeams<T>(items: T[], seed: number): T[] {
   const result = [...items];
@@ -61,7 +62,6 @@ function MarqueeRow({
   offsetClass: string;
 }) {
   const doubled = [...items, ...items];
-  const accentColor = accent === "red" ? "#D90429" : "#00C8FF";
 
   return (
     <div
@@ -81,19 +81,12 @@ function MarqueeRow({
               className={`inline-flex items-center gap-2 rounded border transition-colors duration-200 ${
                 highlighted
                   ? "border-rm-red bg-gradient-to-r from-rm-red to-rm-blue bg-clip-text px-5 py-2.5 text-sm font-black text-transparent shadow-lg shadow-rm-red/30"
-                  : "px-3 py-1.5 text-xs font-medium hover:text-white"
+                  : "px-3 py-1.5 text-[11px] font-medium text-white/50 hover:text-white/80 border-white/[0.08] bg-white/[0.02] hover:bg-white/[0.04]"
               }`}
               style={
                 highlighted
                   ? undefined
-                  : {
-                      color: accentColor,
-                      borderColor: `${accentColor}40`,
-                      background:
-                        accent === "red"
-                          ? "linear-gradient(90deg, rgba(217,4,41,0.12), rgba(217,4,41,0.03))"
-                          : "linear-gradient(90deg, rgba(0,200,255,0.12), rgba(0,200,255,0.03))",
-                    }
+                  : undefined
               }
             >
               {item.school}
@@ -108,7 +101,7 @@ function MarqueeRow({
 }
 
 export default function TeamShowcase() {
-  const rows = regions.map((region, index) => ({
+  const rows = regions.slice(0, MAX_ROWS).map((region, index) => ({
     region: region.name,
     items: rowTeams(
       rmul2026Teams.filter((team) => team.region === region.name),

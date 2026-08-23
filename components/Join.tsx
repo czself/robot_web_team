@@ -12,7 +12,7 @@ export default function Join() {
   const isInView = useInView(ref, { once: true, margin: "-100px" });
 
   return (
-    <section id="join" className="relative py-32 px-6 overflow-hidden">
+    <section id="join" className="relative py-20 px-6 overflow-hidden">
       <div className="absolute inset-0 bg-radial-glow" />
       <div className="absolute inset-0 bg-grid opacity-20" />
 
@@ -21,7 +21,7 @@ export default function Join() {
           initial={{ opacity: 0, y: 40 }}
           animate={isInView ? { opacity: 1, y: 0 } : {}}
           transition={{ duration: 0.8 }}
-          className="text-center mb-16"
+          className="text-center mb-12"
         >
           <p className="text-sm tracking-[0.3em] uppercase mb-4">
             <span className="text-rm-red">Re</span>{" "}
@@ -43,7 +43,7 @@ export default function Join() {
           </p>
         </motion.div>
 
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 mb-16">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 mb-12">
           {teamGroups.map((group, index) => (
             <motion.a
               key={group.id}

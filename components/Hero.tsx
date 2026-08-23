@@ -80,8 +80,8 @@ export default function Hero() {
           sizes="100vw"
           priority
         />
-        <div className="absolute inset-0 bg-gradient-to-b from-black/70 via-black/45 to-black/85" />
-        <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_center,transparent_0%,rgba(10,10,10,0.7)_75%)]" />
+        <div className="absolute inset-0 bg-gradient-to-b from-black/85 via-black/60 to-black/90" />
+        <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_center,transparent_0%,rgba(10,10,10,0.85)_70%)]" />
       </div>
 
       <div className="absolute inset-0 bg-grid opacity-40" />
@@ -140,8 +140,8 @@ export default function Hero() {
           transition={{ delay: 0.5, duration: 0.6 }}
           className="mb-8"
         >
-          <h1 className="text-5xl md:text-7xl lg:text-8xl font-black tracking-tight">
-            <span className="bg-gradient-to-r from-rm-red via-white to-rm-blue bg-clip-text text-transparent">{displayText}</span>
+          <h1 className="text-5xl md:text-7xl lg:text-8xl font-black tracking-tight drop-shadow-[0_0_24px_rgba(0,0,0,0.8)]">
+            <span className="bg-gradient-to-r from-rm-red via-white to-rm-blue bg-clip-text text-transparent drop-shadow-[0_0_30px_rgba(255,255,255,0.35)]">{displayText}</span>
             <span className="inline-block w-[3px] h-[0.8em] bg-gradient-to-b from-rm-red to-rm-blue ml-2 align-middle" style={{ animation: "typing-cursor 1s step-end infinite" }} />
           </h1>
         </motion.div>
@@ -150,11 +150,11 @@ export default function Hero() {
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 0.7, duration: 0.6 }}
-          className="text-lg md:text-xl text-rm-gray mb-12 max-w-2xl mx-auto"
+          className="text-lg md:text-xl text-white/90 mb-12 max-w-2xl mx-auto drop-shadow-[0_2px_8px_rgba(0,0,0,0.6)]"
         >
           RoboMaster 2026 · 步兵对抗赛 & 3v3
           <br />
-          <span className="text-rm-red/80">从 STM32 到 AI 自瞄，零基础也能成为机甲大师</span>
+          <span className="text-rm-red font-medium">从 STM32 到 AI 自瞄，零基础也能成为机甲大师</span>
         </motion.p>
 
         <motion.div

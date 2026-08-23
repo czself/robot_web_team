@@ -61,13 +61,16 @@ export default function Gallery() {
   }, [selected, goNext, goPrev]);
 
   return (
-    <section id="gallery" className="relative py-32 px-6 overflow-hidden">
+    <section id="gallery" className="relative py-20 px-6 overflow-hidden">
+      <div className="absolute inset-0 bg-grid opacity-20" />
+      <div className="absolute inset-0 bg-radial-glow opacity-30" />
+
       <div className="max-w-7xl mx-auto relative" ref={ref}>
         <motion.div
           initial={{ opacity: 0, y: 40 }}
           animate={isInView ? { opacity: 1, y: 0 } : {}}
           transition={{ duration: 0.8 }}
-          className="text-center mb-16"
+          className="text-center mb-12"
         >
           <p className="text-sm tracking-[0.3em] uppercase mb-4">
             <span className="text-rm-red">Gal</span>{" "}

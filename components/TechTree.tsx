@@ -145,7 +145,8 @@ export default function TechTree() {
   const isInView = useInView(ref, { once: true, margin: "-100px" });
 
   return (
-    <section id="tech" className="relative py-32 px-6 overflow-hidden">
+    <section id="tech" className="relative py-20 px-6 overflow-hidden">
+      <div className="absolute inset-0 bg-grid opacity-20" />
       <div className="absolute inset-0 bg-radial-blue opacity-30" />
 
       <div className="max-w-7xl mx-auto relative" ref={ref}>
@@ -153,7 +154,7 @@ export default function TechTree() {
           initial={{ opacity: 0, y: 40 }}
           animate={isInView ? { opacity: 1, y: 0 } : {}}
           transition={{ duration: 0.8 }}
-          className="text-center mb-20"
+          className="text-center mb-12"
         >
           <p className="text-sm tracking-[0.3em] uppercase mb-4">
             <span className="text-rm-red">Tech</span>{" "}

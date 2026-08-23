@@ -35,10 +35,9 @@ export default function Robots() {
   const unitCode = String(activeIndex + 1).padStart(2, "0");
 
   return (
-    <section id="robots" className="relative py-32 px-6 overflow-hidden">
-      <div className="absolute inset-0 bg-grid opacity-20" />
+    <section id="robots" className="relative py-20 px-6 overflow-hidden">
+      <div className="absolute inset-0 bg-grid opacity-25" />
       <div className="absolute inset-0 bg-radial-glow opacity-40" />
-
       <div
         className="absolute top-1/4 -left-32 w-96 h-96 rounded-full bg-rm-red/10 blur-[120px] pointer-events-none"
         aria-hidden
@@ -47,13 +46,17 @@ export default function Robots() {
         className="absolute bottom-1/4 -right-32 w-96 h-96 rounded-full bg-rm-blue/10 blur-[120px] pointer-events-none"
         aria-hidden
       />
+      <div
+        className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[24rem] h-[24rem] rounded-full bg-white/[0.02] blur-[140px] pointer-events-none"
+        aria-hidden
+      />
 
       <div className="max-w-7xl mx-auto relative" ref={ref}>
         <motion.div
           initial={{ opacity: 0, y: 40 }}
           animate={isInView ? { opacity: 1, y: 0 } : {}}
           transition={{ duration: 0.8 }}
-          className="text-center mb-16"
+          className="text-center mb-12"
         >
           <p className="text-sm tracking-[0.3em] uppercase mb-4">
             <span className="text-rm-red">Our</span>{" "}
