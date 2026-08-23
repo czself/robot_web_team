@@ -1,7 +1,7 @@
 import "server-only";
 
 import { kv } from "@/lib/kv";
-import { defaultResources, type TeamResource } from "@/data/portal";
+import { type TeamResource } from "@/data/portal";
 import {
   isResourceCategory,
   normalizeResourceCategory,
@@ -9,6 +9,18 @@ import {
 
 const RESOURCES_KEY = "team:resources";
 const RESOURCE_PREFIX = "team:resource:";
+
+let seeded = false;
+
+const SEED_RESOURCES: Omit<TeamResource, "id" | "updatedAt">[] = [
+  {
+    title: "STM32 全栈修炼手册",
+    category: "电控",
+    level: "进阶",
+    href: "https://github.com/czself/stm_regis_hal",
+    summary: "62 课 STM32F103 寄存器+HAL 双轨教程，从点灯到 FreeRTOS，含完整源码。",
+  },
+];
 
 function resourceKey(id: string): string {
   return `${RESOURCE_PREFIX}${id}`;
@@ -33,21 +45,34 @@ function isSafeHref(href: string): boolean {
   }
 }
 
+async function seedResourcesIfEmpty(): Promise<void> {
+  if (seeded) return;
+  seeded = true;
+  const ids = await kv.lrange(RESOURCES_KEY, 0, -1);
+  if (ids.length) return;
+  for (const resource of SEED_RESOURCES) {
+    await createResource(resource);
+  }
+}
+
 export async function listResources(): Promise<TeamResource[]> {
   const ids = await kv.lrange(RESOURCES_KEY, 0, -1);
-  const customResources: TeamResource[] = ids.length
+  if (!ids.length && !seeded) {
+    await seedResourcesIfEmpty();
+    return listResources();
+  }
+
+  const resources: TeamResource[] = ids.length
     ? ((await kv.mget(...ids.map((id: string) => resourceKey(id)))) as Array<TeamResource | null>)
         .filter((resource): resource is TeamResource => Boolean(resource))
     : [];
 
-  return [
-    ...customResources.map((resource) => ({
+  return resources
+    .map((resource) => ({
       ...resource,
       category: normalizeResourceCategory(String(resource.category)),
       source: "custom" as const,
-    })),
-    ...defaultResources.map((resource) => ({ ...resource, source: "default" as const })),
-  ]
+    }))
     .sort((a, b) => b.updatedAt - a.updatedAt);
 }
 
@@ -88,10 +113,6 @@ export async function updateResource(
   id: string,
   input: Omit<TeamResource, "id" | "updatedAt" | "source">
 ): Promise<TeamResource> {
-  if (defaultResources.some((resource) => resource.id === id)) {
-    throw new Error("默认资料不能编辑");
-  }
-
   const existing = (await kv.get(resourceKey(id))) as TeamResource | null;
   if (!existing) throw new Error("资料不存在");
 
@@ -106,10 +127,6 @@ export async function updateResource(
 }
 
 export async function deleteResource(id: string): Promise<{ deleted: boolean }> {
-  if (defaultResources.some((resource) => resource.id === id)) {
-    throw new Error("默认资料不能删除");
-  }
-
   const existing = await kv.get(resourceKey(id));
   if (!existing) return { deleted: false };
   await kv.del(resourceKey(id));

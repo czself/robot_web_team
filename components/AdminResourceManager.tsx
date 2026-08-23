@@ -27,7 +27,7 @@ export default function AdminResourceManager({
   };
 
   const saveResource = async (resource: TeamResource) => {
-    if (resource.source === "default" || busyId) return;
+    if (busyId) return;
     setBusyId(resource.id);
     setError(null);
     try {
@@ -48,7 +48,7 @@ export default function AdminResourceManager({
   };
 
   const removeResource = async (resource: TeamResource) => {
-    if (resource.source === "default" || busyId) return;
+    if (busyId) return;
     setBusyId(resource.id);
     setError(null);
     try {
@@ -72,7 +72,7 @@ export default function AdminResourceManager({
       <div className="border-b border-white/10 px-5 py-4">
         <h3 className="font-black text-white">资料索引管理</h3>
         <p className="mt-1 text-xs text-rm-gray">
-          默认资料只读，队员新增的资料可以编辑和删除。
+          所有资料均可编辑和删除。
         </p>
       </div>
 
@@ -84,7 +84,6 @@ export default function AdminResourceManager({
 
       <div className="divide-y divide-white/5">
         {resources.map((resource) => {
-          const readonly = resource.source === "default";
           return (
             <div
               key={resource.id}
@@ -94,14 +93,12 @@ export default function AdminResourceManager({
                 <input
                   value={resource.title}
                   onChange={(e) => setResource(resource.id, { title: e.target.value })}
-                  disabled={readonly}
-                  className="h-9 w-full rounded-lg border border-white/10 bg-rm-dark/70 px-3 text-sm font-bold text-white outline-none focus:border-rm-blue/50 disabled:opacity-60"
+                  className="h-9 w-full rounded-lg border border-white/10 bg-rm-dark/70 px-3 text-sm font-bold text-white outline-none focus:border-rm-blue/50"
                 />
                 <input
                   value={resource.href}
                   onChange={(e) => setResource(resource.id, { href: e.target.value })}
-                  disabled={readonly}
-                  className="h-9 w-full rounded-lg border border-white/10 bg-rm-dark/70 px-3 font-mono text-xs text-rm-gray outline-none focus:border-rm-red/50 disabled:opacity-60"
+                  className="h-9 w-full rounded-lg border border-white/10 bg-rm-dark/70 px-3 font-mono text-xs text-rm-gray outline-none focus:border-rm-red/50"
                 />
               </div>
 
@@ -112,8 +109,7 @@ export default function AdminResourceManager({
                     category: e.target.value as TeamResource["category"],
                   })
                 }
-                disabled={readonly}
-                className="h-9 rounded-lg border border-white/10 bg-rm-dark/70 px-2 text-sm text-white outline-none focus:border-rm-blue/50 disabled:opacity-60"
+                className="h-9 rounded-lg border border-white/10 bg-rm-dark/70 px-2 text-sm text-white outline-none focus:border-rm-blue/50"
               >
                 {categories.map((category) => (
                   <option key={category}>{category}</option>
@@ -127,8 +123,7 @@ export default function AdminResourceManager({
                     level: e.target.value as TeamResource["level"],
                   })
                 }
-                disabled={readonly}
-                className="h-9 rounded-lg border border-white/10 bg-rm-dark/70 px-2 text-sm text-white outline-none focus:border-rm-red/50 disabled:opacity-60"
+                className="h-9 rounded-lg border border-white/10 bg-rm-dark/70 px-2 text-sm text-white outline-none focus:border-rm-red/50"
               >
                 {levels.map((level) => (
                   <option key={level}>{level}</option>
@@ -138,25 +133,15 @@ export default function AdminResourceManager({
               <textarea
                 value={resource.summary}
                 onChange={(e) => setResource(resource.id, { summary: e.target.value })}
-                disabled={readonly}
                 rows={3}
-                className="rounded-lg border border-white/10 bg-rm-dark/70 px-3 py-2 text-sm text-rm-gray outline-none focus:border-rm-blue/50 disabled:opacity-60"
+                className="rounded-lg border border-white/10 bg-rm-dark/70 px-3 py-2 text-sm text-rm-gray outline-none focus:border-rm-blue/50"
               />
 
               <div className="flex items-start gap-2">
-                <span
-                  className={`rounded-full border px-2.5 py-1 text-xs font-bold ${
-                    readonly
-                      ? "border-white/10 text-rm-gray"
-                      : "border-rm-blue/30 bg-rm-blue/10 text-rm-blue"
-                  }`}
-                >
-                  {readonly ? "默认" : "自定义"}
-                </span>
                 <button
                   type="button"
                   onClick={() => void saveResource(resource)}
-                  disabled={readonly || busyId === resource.id}
+                  disabled={busyId === resource.id}
                   className="inline-flex h-9 w-9 items-center justify-center rounded-lg border border-rm-blue/30 bg-rm-blue/10 text-rm-blue transition-colors hover:bg-rm-blue/15 disabled:opacity-40"
                   aria-label="保存资料"
                   title="保存资料"
@@ -170,7 +155,7 @@ export default function AdminResourceManager({
                 <button
                   type="button"
                   onClick={() => void removeResource(resource)}
-                  disabled={readonly || busyId === resource.id}
+                  disabled={busyId === resource.id}
                   className="inline-flex h-9 w-9 items-center justify-center rounded-lg border border-rm-red/30 bg-rm-red/10 text-rm-red transition-colors hover:bg-rm-red/15 disabled:opacity-40"
                   aria-label="删除资料"
                   title="删除资料"
