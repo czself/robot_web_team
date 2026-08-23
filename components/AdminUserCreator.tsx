@@ -188,16 +188,16 @@ export default function AdminUserCreator({
 
         <div className="space-y-3">
           <input
-            value={form.username}
-            onChange={(e) => update("username", e.target.value)}
-            inputMode="numeric"
-            placeholder="学号 / 用户名"
-            className="h-10 w-full rounded-lg border border-white/10 bg-rm-dark/70 px-3 text-sm text-white outline-none placeholder:text-rm-gray/50 focus:border-rm-blue/50"
-          />
-          <input
             value={form.name}
             onChange={(e) => update("name", e.target.value)}
             placeholder="姓名"
+            className="h-10 w-full rounded-lg border border-white/10 bg-rm-dark/70 px-3 text-sm text-white outline-none placeholder:text-rm-gray/50 focus:border-rm-blue/50"
+          />
+          <input
+            value={form.username}
+            onChange={(e) => update("username", e.target.value)}
+            inputMode="numeric"
+            placeholder="学号 / 用户名（6-20 位数字）"
             className="h-10 w-full rounded-lg border border-white/10 bg-rm-dark/70 px-3 text-sm text-white outline-none placeholder:text-rm-gray/50 focus:border-rm-blue/50"
           />
           <input
