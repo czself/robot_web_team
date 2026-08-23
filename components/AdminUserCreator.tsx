@@ -30,7 +30,6 @@ export default function AdminUserCreator({
     name: "",
     password: "",
     group: DEFAULT_TEAM_GROUP,
-    role: "admin" as UserRole,
   });
   const [loading, setLoading] = useState(false);
   const [updatingId, setUpdatingId] = useState<string | null>(null);
@@ -122,7 +121,7 @@ export default function AdminUserCreator({
       const res = await fetch("/api/portal/users", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(form),
+        body: JSON.stringify({ ...form, role: "admin" }),
       });
       const json = await res.json().catch(() => null);
       if (!res.ok || !json?.ok) throw new Error(json?.error || "创建失败");
@@ -132,7 +131,6 @@ export default function AdminUserCreator({
         name: "",
         password: "",
         group: DEFAULT_TEAM_GROUP,
-        role: "admin",
       });
     } catch (e) {
       setError((e as Error).message);
@@ -218,14 +216,6 @@ export default function AdminUserCreator({
               ))}
             </select>
           </div>
-          <select
-            value={form.role}
-            onChange={(e) => update("role", e.target.value as UserRole)}
-            className="h-10 w-full rounded-lg border border-white/10 bg-rm-dark/70 px-3 text-sm text-white outline-none focus:border-rm-blue/50"
-          >
-            <option value="member">普通队员</option>
-            <option value="admin">管理员</option>
-          </select>
         </div>
 
         {error && (
