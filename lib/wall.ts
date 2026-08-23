@@ -177,9 +177,11 @@ export async function createMessage(input: {
   };
   await kv.lpush(MSG_KEY, msg.id);
   await kv.set(`${META_PREFIX}${msg.id}`, msg);
-  sendWallMailNotice(msg).catch((err) => {
+  try {
+    await sendWallMailNotice(msg);
+  } catch (err) {
     console.error("wall mail notice failed:", err);
-  });
+  }
   return msg;
 }
 
