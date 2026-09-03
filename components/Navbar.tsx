@@ -9,6 +9,7 @@ const navLinks = [
   { label: "首页", href: "/" },
   { label: "星图", href: "/tech" },
   { label: "关于", href: "/about" },
+  { label: "3v3 模拟器", href: "/simulator" },
   { label: "留言墙", href: "/wall" },
 ];
 
