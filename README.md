@@ -17,10 +17,15 @@
 
 ## 本地开发
 
+使用 Node.js 20（与当前 CI 一致）。在仓库根目录执行：
+
 ```bash
-npm install
+npm ci
+cp .env.example .env.local
 npm run dev
 ```
+
+需要远程 KV、管理员初始化或邮件通知时，先编辑 `.env.local` 再启动。Windows PowerShell 中可使用 `Copy-Item .env.example .env.local` 复制模板。
 
 打开 http://localhost:3000。本地开发在未配置远程 KV 时会使用进程内存储；重启开发服务器后，这些临时数据会清空。
 
@@ -36,8 +41,8 @@ KV_REST_API_TOKEN=
 只有同时显式配置以下变量时，系统才会在首次登录请求中初始化管理员。用户名必须是 6–20 位数字学号，密码必须为 6–72 位并同时包含字母和数字；首次登录后必须修改密码：
 
 ```bash
-TEAM_ADMIN_USERNAME=20260001
-TEAM_ADMIN_PASSWORD=replace-with-a-strong-bootstrap-password
+TEAM_ADMIN_USERNAME=
+TEAM_ADMIN_PASSWORD=
 ```
 
 报名邮件通知：
