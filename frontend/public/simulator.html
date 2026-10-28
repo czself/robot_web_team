@@ -1,0 +1,3237 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="description" content="YZ Control RMUL2026 3V3 机甲大师高校联盟赛模拟器：组装英雄、步兵、哨兵并进入实时对战仿真。">
+  <meta name="theme-color" content="#05080f">
+  <link rel="canonical" href="https://yz-control.top/simulator.html">
+  <title>RMUL2026 3V3 机甲大师高校联盟赛模拟器 · YZ Control</title>
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      background: #05080f;
+      color: #e6f7ff;
+      font-family: "Microsoft YaHei", "Segoe UI", sans-serif;
+      overflow: hidden;
+      user-select: none;
+    }
+
+    /* ========== 组装模式 ========== */
+    #assemblyScreen {
+      position: fixed; inset: 0;
+      display: flex; flex-direction: column;
+      background: radial-gradient(circle at 50% 30%, #0d1620 0%, #05080f 70%);
+    }
+    #assemblyHeader {
+      padding: 14px 24px;
+      display: flex; justify-content: space-between; align-items: center;
+      border-bottom: 1px solid #1f2d3d;
+    }
+    #assemblyHeader .header-left { display: flex; align-items: center; gap: 16px; }
+    .back-link {
+      color: #7a8fa3; text-decoration: none; font-size: 13px;
+      display: inline-flex; align-items: center; gap: 4px;
+      transition: color 0.15s;
+    }
+    .back-link:hover { color: #00eaff; }
+    #assemblyHeader h1 {
+      font-size: 20px; color: #00eaff; letter-spacing: 2px;
+    }
+    #assemblyHeader .subtitle {
+      font-size: 12px; color: #7a8fa3;
+    }
+    .assembly-main {
+      flex: 1; display: flex; flex-direction: column; overflow: hidden;
+      padding: 16px 24px;
+      gap: 12px;
+    }
+    .robot-tabs {
+      display: flex; gap: 10px;
+    }
+    .robot-tab {
+      padding: 10px 24px;
+      background: rgba(0,234,255,0.08);
+      border: 1px solid #1f2d3d;
+      border-radius: 6px;
+      color: #e6f7ff; cursor: pointer; transition: 0.15s;
+      font-size: 14px; font-weight: bold;
+    }
+    .robot-tab:hover { border-color: #00eaff; }
+    .robot-tab.active { background: rgba(0,234,255,0.2); border-color: #00eaff; color: #00eaff; }
+    .robot-tab .valid-badge {
+      display: inline-block; margin-left: 8px;
+      width: 8px; height: 8px; border-radius: 50%;
+      background: #ff4757;
+    }
+    .robot-tab .valid-badge.ok { background: #2ed573; }
+
+    .assembly-layout {
+      flex: 1; display: grid;
+      grid-template-columns: 1.2fr 1fr 1fr;
+      gap: 16px; min-height: 0;
+    }
+    .panel {
+      background: rgba(8,12,18,0.9);
+      border: 1px solid #1f2d3d;
+      border-radius: 8px;
+      display: flex; flex-direction: column;
+      overflow: hidden;
+    }
+    .panel h3 {
+      padding: 12px 14px;
+      font-size: 13px; color: #00eaff;
+      border-bottom: 1px solid #1f2d3d;
+      background: rgba(0,234,255,0.05);
+    }
+    .panel-body {
+      flex: 1; overflow-y: auto; padding: 12px;
+    }
+
+    /* 零件库 */
+    .part-category {
+      margin-bottom: 14px;
+    }
+    .part-category h4 {
+      font-size: 11px; color: #7a8fa3; margin-bottom: 6px;
+      text-transform: uppercase; letter-spacing: 1px;
+    }
+    .part-card {
+      padding: 10px;
+      margin-bottom: 8px;
+      background: rgba(255,255,255,0.03);
+      border: 1px solid #1f2d3d;
+      border-radius: 6px;
+      cursor: pointer; transition: 0.15s;
+      position: relative;
+    }
+    .part-card:hover { border-color: #00eaff; background: rgba(0,234,255,0.08); }
+    .part-card.selected { border-color: #00eaff; background: rgba(0,234,255,0.12); }
+    .part-card.disabled { opacity: 0.4; cursor: not-allowed; }
+    .part-card .part-name {
+      font-size: 12px; font-weight: bold; margin-bottom: 4px;
+    }
+    .part-card .part-desc {
+      font-size: 10px; color: #7a8fa3; line-height: 1.4;
+    }
+    .part-card .part-tradeoff {
+      margin-top: 5px; padding: 4px 5px; border-left: 2px solid #3b5970;
+      font-size: 9px; line-height: 1.45; background: rgba(0,0,0,0.16);
+    }
+    .part-card .part-stats {
+      margin-top: 6px;
+      display: flex; flex-wrap: wrap; gap: 6px;
+      font-size: 10px; color: #aabbcc;
+    }
+    .part-card .part-stat span { color: #7a8fa3; }
+
+    /* 装配槽位 */
+    .slots-grid {
+      display: flex; flex-direction: column; gap: 10px;
+    }
+    .slot-row {
+      display: flex; align-items: center; gap: 10px;
+      padding: 10px;
+      background: rgba(255,255,255,0.02);
+      border: 1px dashed #2a3a4d;
+      border-radius: 6px;
+      min-height: 56px;
+    }
+    .slot-row.filled {
+      border-style: solid; border-color: #1f2d3d;
+      background: rgba(255,255,255,0.04);
+    }
+    .slot-row.disabled {
+      opacity: 0.55;
+      border-style: solid;
+      border-color: #3b4755;
+      background: rgba(74,90,109,0.12);
+    }
+    .slot-label {
+      width: 60px; font-size: 11px; color: #7a8fa3;
+    }
+    .slot-content {
+      flex: 1; font-size: 12px;
+    }
+    .slot-content .empty { color: #4a5a6d; font-style: italic; }
+    .slot-content .equipped-name { font-weight: bold; margin-bottom: 2px; }
+    .slot-content .equipped-desc { font-size: 10px; color: #7a8fa3; }
+    .slot-remove {
+      padding: 4px 10px;
+      background: rgba(255,71,87,0.15);
+      border: 1px solid rgba(255,71,87,0.3);
+      color: #ff4757; border-radius: 4px;
+      cursor: pointer; font-size: 10px;
+    }
+    .slot-remove:hover { background: rgba(255,71,87,0.25); }
+
+    /* 属性面板 */
+    .stat-block { margin-bottom: 14px; }
+    .stat-block h4 {
+      font-size: 11px; color: #7a8fa3; margin-bottom: 8px;
+    }
+    .stat-line {
+      display: flex; justify-content: space-between;
+      font-size: 12px; margin: 5px 0;
+    }
+    .stat-line .label { color: #aabbcc; }
+    .stat-line .value { font-weight: bold; }
+    .stat-line .value.ok { color: #2ed573; }
+    .stat-line .value.warn { color: #ff4757; }
+    .stat-bar {
+      height: 6px; background: #222; border-radius: 3px;
+      overflow: hidden; margin: 6px 0 10px;
+    }
+    .stat-bar span {
+      display: block; height: 100%;
+      background: #00eaff; transition: width 0.2s;
+    }
+    .validation-box {
+      margin-top: 12px;
+      padding: 10px;
+      border-radius: 6px;
+      font-size: 12px;
+    }
+    .validation-box.ok {
+      background: rgba(46,213,115,0.1); border: 1px solid rgba(46,213,115,0.3); color: #2ed573;
+    }
+    .validation-box.err {
+      background: rgba(255,71,87,0.1); border: 1px solid rgba(255,71,87,0.3); color: #ff4757;
+    }
+
+    .assembly-footer {
+      padding: 12px 24px;
+      display: flex; justify-content: flex-end; align-items: center;
+      gap: 16px;
+      border-top: 1px solid #1f2d3d;
+    }
+    .assembly-footer .hint {
+      font-size: 12px; color: #7a8fa3;
+    }
+    #startBattleBtn {
+      padding: 12px 32px;
+      background: linear-gradient(135deg, #00eaff, #0088ff);
+      border: none; border-radius: 6px;
+      color: #05080f; font-weight: bold; font-size: 14px;
+      cursor: pointer; transition: 0.15s;
+    }
+    #startBattleBtn:disabled {
+      background: #2a3a4d; color: #5a6a7d; cursor: not-allowed;
+    }
+    #startBattleBtn:hover:not(:disabled) { filter: brightness(1.15); }
+
+    /* ========== 对战模式 ========== */
+    #battleScreen {
+      position: fixed; inset: 0;
+      display: none;
+    }
+    #gameCanvas {
+      display: block;
+      background: #080c12;
+      cursor: crosshair;
+      image-rendering: pixelated;
+      max-width: 100vw;
+      max-height: calc(100vh - 130px);
+      width: auto;
+      height: auto;
+      margin: 0 auto;
+    }
+    .ui-layer {
+      position: absolute;
+      pointer-events: none;
+    }
+    #topHud {
+      top: 4px; left: 4px; right: 4px;
+      display: flex; justify-content: space-between; align-items: center;
+    }
+    #centerVpDisplay {
+      top: 42px; left: 50%; transform: translateX(-50%);
+      display: flex; align-items: center; gap: 10px;
+      background: rgba(8,12,18,0.75); border: 1px solid #1f2d3d;
+      border-radius: 8px; padding: 4px 14px;
+      pointer-events: none;
+    }
+    #exitBattleBtn {
+      position: absolute;
+      top: 4px; right: 4px;
+      padding: 5px 10px;
+      background: rgba(255,71,87,0.15);
+      border: 1px solid rgba(255,71,87,0.4);
+      color: #ff4757;
+      border-radius: 5px;
+      cursor: pointer;
+      font-size: 11px;
+      pointer-events: auto;
+      transition: 0.15s;
+    }
+    #exitBattleBtn:hover { background: rgba(255,71,87,0.25); border-color: #ff4757; }
+    .vp-item { text-align: center; }
+    .vp-item span { display: block; font-size: 22px; font-weight: bold; line-height: 1; }
+    .vp-item.red span { color: #ff4757; }
+    .vp-item.blue span { color: #2e86de; }
+    .vp-item small { font-size: 9px; color: #7a8fa3; }
+    .vp-vs { font-size: 10px; color: #7a8fa3; font-weight: bold; }
+    .hud-team {
+      display: flex; gap: 8px; align-items: center;
+      background: rgba(8,12,18,0.75);
+      border: 1px solid #1f2d3d;
+      border-radius: 6px; padding: 5px 10px;
+      font-size: 11px;
+    }
+    .hud-score { font-size: 18px; font-weight: bold; }
+    .hud-res { display: flex; gap: 8px; font-size: 10px; color: #7a8fa3; }
+    .hud-time {
+      font-size: 16px; font-weight: bold; color: #00eaff;
+      background: rgba(8,12,18,0.75); border: 1px solid #1f2d3d;
+      border-radius: 6px; padding: 5px 12px;
+    }
+    #centerVpDisplay {
+      top: 52px; left: 50%; transform: translateX(-50%);
+      display: flex; align-items: center; gap: 14px;
+      background: rgba(8,12,18,0.9); border: 1px solid #1f2d3d;
+      border-radius: 8px; padding: 6px 18px;
+      pointer-events: none;
+    }
+    .vp-item { text-align: center; }
+    .vp-item span { display: block; font-size: 26px; font-weight: bold; line-height: 1; }
+    .vp-item.red span { color: #ff4757; }
+    .vp-item.blue span { color: #2e86de; }
+    .vp-item small { font-size: 10px; color: #7a8fa3; }
+    .vp-vs { font-size: 12px; color: #7a8fa3; font-weight: bold; }
+    .hud-team {
+      display: flex; gap: 12px; align-items: center;
+      background: rgba(8,12,18,0.85);
+      border: 1px solid #1f2d3d;
+      border-radius: 6px; padding: 8px 14px;
+      font-size: 14px;
+    }
+    .hud-team.red { border-color: rgba(255,71,87,0.4); }
+    .hud-team.blue { border-color: rgba(46,134,222,0.4); }
+    .hud-score { font-size: 22px; font-weight: bold; }
+    .hud-res { display: flex; gap: 10px; font-size: 12px; color: #7a8fa3; }
+    .hud-time {
+      font-size: 20px; font-weight: bold; color: #00eaff;
+      background: rgba(8,12,18,0.85); border: 1px solid #1f2d3d;
+      border-radius: 6px; padding: 8px 16px;
+    }
+    #leftPanel {
+      left: 6px; top: 64px; width: 170px;
+      background: rgba(8,12,18,0.75); border: 1px solid #1f2d3d;
+      border-radius: 8px; padding: 8px;
+      pointer-events: auto;
+    }
+    #leftPanel h3 { color: #00eaff; font-size: 11px; margin-bottom: 6px; }
+    .robot-list { display: flex; flex-direction: column; gap: 4px; }
+    .robot-row {
+      display: flex; align-items: center; gap: 6px;
+      padding: 4px; border-radius: 4px;
+      background: rgba(255,255,255,0.03);
+      cursor: pointer; transition: 0.15s;
+      border: 1px solid transparent;
+    }
+    .robot-row:hover { background: rgba(0,234,255,0.08); }
+    .robot-row.selected { border-color: #00eaff; background: rgba(0,234,255,0.12); }
+    .robot-row.dead { opacity: 0.4; }
+    .robot-row.disabled { opacity: 0.6; background: rgba(255,71,87,0.08); }
+    .robot-row.sentry { opacity: 0.7; cursor: not-allowed; }
+    .robot-icon { width: 10px; height: 10px; border-radius: 50%; flex-shrink: 0; }
+    .robot-info { flex: 1; font-size: 10px; }
+    .robot-name { font-weight: bold; }
+    .bar-mini { height: 2px; background: #333; border-radius: 2px; margin-top: 2px; overflow: hidden; }
+    .bar-mini span { display: block; height: 100%; }
+    #detailPanel {
+      left: 6px; top: 220px; width: 170px; max-height: 55vh; overflow-y: auto;
+      background: rgba(8,12,18,0.75); border: 1px solid #1f2d3d;
+      border-radius: 8px; padding: 8px;
+      pointer-events: auto;
+    }
+    #detailPanel h3 { color: #00eaff; font-size: 11px; margin-bottom: 6px; }
+    .stat-row { display: flex; justify-content: space-between; font-size: 10px; margin: 3px 0; }
+    .stat-row .label { color: #7a8fa3; }
+    .stat-row .value { font-weight: bold; }
+    .big-bar { height: 5px; background: #222; border-radius: 3px; overflow: hidden; margin: 2px 0 6px; }
+    .big-bar span { display: block; height: 100%; transition: width 0.1s; }
+    .overpower { color: #ff4757 !important; }
+    #sentryPanel {
+      right: 6px; top: 64px; width: 160px;
+      background: rgba(8,12,18,0.75); border: 1px solid #1f2d3d;
+      border-radius: 8px; padding: 8px;
+      pointer-events: auto;
+    }
+    #sentryPanel h3 { color: #00eaff; font-size: 11px; margin-bottom: 6px; }
+    #sentryEditorPanel {
+      right: 172px; top: 64px; width: 280px; max-height: 70vh; overflow-y: auto;
+      background: rgba(8,12,18,0.9); border: 1px solid #00eaff;
+      border-radius: 8px; padding: 8px;
+      pointer-events: auto;
+    }
+    #sentryEditorPanel h3 { color: #00eaff; font-size: 11px; margin-bottom: 8px; }
+    .preset-btn {
+      width: 100%; margin: 3px 0; padding: 5px;
+      background: rgba(0,234,255,0.08); border: 1px solid #1f2d3d;
+      color: #e6f7ff; border-radius: 5px; cursor: pointer;
+      font-size: 10px; transition: 0.15s;
+    }
+    .preset-btn:hover { border-color: #00eaff; }
+    .preset-btn.active { background: rgba(0,234,255,0.2); border-color: #00eaff; }
+    .preset-desc { font-size: 9px; color: #7a8fa3; margin-top: 1px; }
+    .preset-edit-block { margin-bottom: 8px; }
+    .preset-edit-title { font-size: 10px; color: #7a8fa3; margin-bottom: 2px; }
+    .preset-edit-block textarea {
+      width: 100%; height: 100px;
+      background: rgba(0,0,0,0.5); color: #e6f7ff;
+      border: 1px solid #1f2d3d; border-radius: 4px;
+      padding: 4px; font-family: monospace; font-size: 9px;
+      resize: vertical;
+    }
+    .preset-edit-block button {
+      margin-top: 2px; margin-right: 4px;
+      padding: 3px 8px; background: rgba(0,234,255,0.1);
+      border: 1px solid #1f2d3d; color: #e6f7ff;
+      border-radius: 4px; cursor: pointer; font-size: 10px;
+    }
+    .preset-edit-block button:hover { border-color: #00eaff; }
+    #logPanel {
+      bottom: 8px; left: 8px; right: 8px; height: 110px;
+      background: rgba(8,12,18,0.9); border: 1px solid #1f2d3d;
+      border-radius: 8px; padding: 8px 12px;
+      font-family: monospace; font-size: 11px;
+      overflow-y: auto; color: #7a8fa3;
+      pointer-events: auto;
+    }
+    #logPanel .log-red { color: #ff4757; }
+    #logPanel .log-blue { color: #2e86de; }
+    #logPanel .log-info { color: #00eaff; }
+    #logPanel .log-gold { color: #ffa502; }
+    #helpTip {
+      position: absolute; bottom: 128px; left: 8px;
+      background: rgba(0,0,0,0.7); padding: 6px 10px;
+      border-radius: 4px; font-size: 11px; color: #7a8fa3;
+      border-left: 2px solid #00eaff;
+    }
+
+    /* ========== 结算弹窗 ========== */
+    #settlementModal {
+      position: fixed; inset: 0;
+      display: none;
+      align-items: center; justify-content: center;
+      background: rgba(0,0,0,0.75);
+      z-index: 100;
+    }
+    #ammoPurchaseModal {
+      position: fixed; inset: 0; display: none; align-items: center; justify-content: center;
+      background: rgba(0,0,0,0.72); z-index: 30;
+    }
+    .ammo-purchase-box {
+      width: min(360px, 90vw); padding: 20px; background: #111b28; border: 1px solid #00eaff;
+      border-radius: 8px; box-shadow: 0 0 24px rgba(0,234,255,0.25); color: #d8f5ff;
+    }
+    .ammo-purchase-box h3 { margin: 0 0 10px; color: #00eaff; }
+    .ammo-purchase-box .ammo-row { display:flex; justify-content:space-between; margin: 8px 0; }
+    .ammo-purchase-box input { width: 70px; padding: 6px; background:#08111c; border:1px solid #3b5970; color:#fff; text-align:center; }
+    .ammo-purchase-box input.insufficient, .ammo-purchase-box .cost.insufficient, .ammo-purchase-box .plus-btn.insufficient { border-color:#ff4757; color:#ff4757; }
+    .ammo-purchase-box .plus-btn, .ammo-purchase-box .minus-btn { width:32px; height:30px; padding:0; margin:0 0 0 4px; font-size:18px; line-height:1; }
+    .ammo-purchase-box .cost { margin-top:6px; font-weight:bold; }
+    .ammo-purchase-box .insufficient-hint { display:none; margin-left:8px; color:#ff4757; }
+    .ammo-purchase-box .insufficient-hint.show { display:inline; }
+    .ammo-purchase-box button { margin: 10px 6px 0 0; padding: 7px 14px; cursor:pointer; }
+    .settlement-box {
+      width: 420px;
+      background: rgba(8,12,18,0.95);
+      border: 1px solid #1f2d3d;
+      border-radius: 12px;
+      padding: 28px;
+      text-align: center;
+      box-shadow: 0 0 40px rgba(0,234,255,0.1);
+    }
+    .settlement-title {
+      font-size: 24px; font-weight: bold; margin-bottom: 8px;
+    }
+    .settlement-title.red { color: #ff4757; }
+    .settlement-title.blue { color: #2e86de; }
+    .settlement-reason {
+      font-size: 13px; color: #7a8fa3; margin-bottom: 20px;
+    }
+    .settlement-stats {
+      display: grid; grid-template-columns: 1fr 1fr;
+      gap: 10px; margin-bottom: 24px;
+    }
+    .settlement-stat {
+      background: rgba(255,255,255,0.03);
+      border: 1px solid #1f2d3d;
+      border-radius: 6px; padding: 10px;
+    }
+    .settlement-stat .label { font-size: 11px; color: #7a8fa3; }
+    .settlement-stat .value { font-size: 16px; font-weight: bold; margin-top: 4px; }
+    .settlement-buttons {
+      display: flex; gap: 12px; justify-content: center;
+    }
+    .settlement-buttons button {
+      padding: 10px 20px;
+      border-radius: 6px; border: 1px solid #1f2d3d;
+      background: rgba(0,234,255,0.08);
+      color: #e6f7ff; cursor: pointer; font-size: 13px;
+      transition: 0.15s;
+    }
+    .settlement-buttons button:hover { border-color: #00eaff; background: rgba(0,234,255,0.15); }
+    .settlement-buttons button.primary {
+      background: linear-gradient(135deg, #00eaff, #0088ff);
+      border: none; color: #05080f; font-weight: bold;
+    }
+  </style>
+</head>
+<body>
+  <!-- ========== 组装模式 ========== -->
+  <div id="assemblyScreen">
+    <div id="assemblyHeader">
+      <div class="header-left">
+        <a href="/simulator" class="back-link">← 返回 YZ Control</a>
+        <div>
+          <h1>RMUL2026 3V3 机甲组装模式</h1>
+          <div class="subtitle">为英雄、步兵、哨兵分别装配模块，校验通过后方可进入对战</div>
+        </div>
+      </div>
+      <div class="subtitle">点击零件查看详情，点击槽位卸下模块</div>
+    </div>
+    <div class="assembly-main">
+      <div class="robot-tabs" id="robotTabs"></div>
+      <div class="assembly-layout">
+        <div class="panel">
+          <h3>可用零件库</h3>
+          <div class="panel-body" id="partsLibrary"></div>
+        </div>
+        <div class="panel">
+          <h3>当前装配</h3>
+          <div class="panel-body" id="assemblySlots"></div>
+        </div>
+        <div class="panel">
+          <h3>整机属性与校验</h3>
+          <div class="panel-body" id="statsPanel"></div>
+        </div>
+      </div>
+    </div>
+    <div class="assembly-footer">
+      <div class="hint">所有机体校验通过后可进入对战</div>
+      <button id="startBattleBtn" disabled>进入 3V3 对战</button>
+    </div>
+  </div>
+
+  <!-- ========== 对战模式 ========== -->
+  <div id="battleScreen">
+    <canvas id="gameCanvas"></canvas>
+
+    <div id="topHud" class="ui-layer">
+      <div class="hud-team red">
+        <span>红方 VP</span>
+        <span class="hud-score" id="redScore">200</span>
+        <div class="hud-res">
+          <span>金币:<b id="redGold">0</b></span>
+        </div>
+      </div>
+      <div class="hud-time" id="gameTime">05:00</div>
+      <div class="hud-team blue">
+        <div class="hud-res">
+          <span>金币:<b id="blueGold">0</b></span>
+        </div>
+        <span class="hud-score" id="blueScore">200</span>
+        <span>蓝方 VP</span>
+      </div>
+    </div>
+
+    <div id="centerVpDisplay" class="ui-layer">
+      <div class="vp-item red"><span id="centerRedVp">200</span><small>红方 VP</small></div>
+      <div class="vp-vs">VS</div>
+      <div class="vp-item blue"><span id="centerBlueVp">200</span><small>蓝方 VP</small></div>
+    </div>
+
+    <div id="leftPanel" class="ui-layer">
+      <h3>我方机器人（点击选中）</h3>
+      <div class="robot-list" id="robotList"></div>
+    </div>
+
+    <div id="detailPanel" class="ui-layer">
+      <h3>选中单位状态</h3>
+      <div id="detailContent">
+        <div class="stat-row"><span class="label">点击左侧机器人选中</span></div>
+      </div>
+    </div>
+
+    <div id="sentryPanel" class="ui-layer">
+      <h3>红方哨兵预设脚本</h3>
+      <button class="preset-btn" id="preset1" onclick="Game.runSentryPreset(0)">预设一：前线自转防御</button>
+      <div class="preset-desc">1m 内敌人开启自转并攻击</div>
+      <button class="preset-btn" id="preset2" onclick="Game.runSentryPreset(1)">预设二：补给区防守</button>
+      <div class="preset-desc">围绕补给区巡逻，低血量回补给区</div>
+      <button class="preset-btn" id="preset3" onclick="Game.runSentryPreset(2)">预设三：控制区压制</button>
+      <div class="preset-desc">前往中心控制区巡逻，争夺占领并压制敌人</div>
+      <button class="preset-btn" onclick="Game.openSentryEditor()" style="margin-top:8px;background:rgba(0,234,255,0.15);">编辑预设程序</button>
+    </div>
+
+    <div id="sentryEditorPanel" class="ui-layer" style="display:none;">
+      <h3>哨兵预设程序编辑器</h3>
+      <div id="sentryEditorContent"></div>
+      <button class="preset-btn" onclick="Game.openSentryEditor()" style="margin-top:8px;">关闭编辑器</button>
+    </div>
+
+    <div id="logPanel"></div>
+  <div id="helpTip">WASD 移动选中机器人 | 空格切换英雄/步兵 | 鼠标左键瞄准并开火（受射速/冷却/过热/弹药限制） | Q 切换自转模式 | 英雄/步兵在己方补给区按 R 购买弹药 | HP归零后死亡5秒，之后瘫痪只能移动，回补给区回血解锁攻击 | 哨兵仅由预设程序控制</div>
+    <button id="exitBattleBtn" class="ui-layer" onclick="Game.returnToAssembly()">退出战斗</button>
+  </div>
+
+  <!-- ========== 结算弹窗 ========== -->
+  <div id="settlementModal">
+    <div class="settlement-box">
+      <div class="settlement-title" id="settlementTitle">红方获胜</div>
+      <div class="settlement-reason" id="settlementReason">对方胜利点归零</div>
+      <div class="settlement-stats" id="settlementStats"></div>
+      <div class="settlement-buttons">
+        <button id="returnToAssemblyBtn" onclick="Game.returnToAssembly()">返回主页面重新组装</button>
+        <button id="continueBattleBtn" class="primary" onclick="Game.continueBattle()">继续战斗</button>
+      </div>
+    </div>
+  </div>
+  <div id="ammoPurchaseModal">
+    <div class="ammo-purchase-box">
+      <h3>购买弹药</h3>
+      <div>剩余金币：<span id="ammoGold">0</span></div>
+      <div class="ammo-row"><label>英雄（15 金币/发）</label><span><input id="heroAmmoBuy" type="number" min="0" step="1" value="0" readonly><button id="heroAmmoMinus" class="minus-btn" onclick="Game.removeAmmoPurchase('hero')" aria-label="减少英雄弹药">−</button><button id="heroAmmoPlus" class="plus-btn" onclick="Game.addAmmoPurchase('hero')" aria-label="增加英雄弹药">+</button></span></div>
+      <div class="ammo-row"><label>步兵（1 金币/发）</label><span><input id="infantryAmmoBuy" type="number" min="0" step="10" value="0" readonly><button id="infantryAmmoMinus" class="minus-btn" onclick="Game.removeAmmoPurchase('infantry')" aria-label="减少步兵弹药">−</button><button id="infantryAmmoPlus" class="plus-btn" onclick="Game.addAmmoPurchase('infantry')" aria-label="增加步兵弹药">+</button></span></div>
+      <div class="cost">总价：<span id="ammoCostPreview">0</span><span id="ammoInsufficientHint" class="insufficient-hint">金币不足</span></div>
+      <button onclick="Game.confirmAmmoPurchase()">确认购买</button>
+      <button onclick="Game.closeAmmoPurchase()">取消</button>
+    </div>
+  </div>
+
+  <script>
+  'use strict';
+
+  // ============ 常量配置 ============
+  const SCALE = 5;
+  const LOGIC_W = 320; // 16m / 0.05m = 320
+  const LOGIC_H = 180; // 9m / 0.05m = 180
+  const MM_PER_UNIT = 50;
+  const MATCH_TIME = 300;
+  const OPENING_SUPPLY_TIME = 10;
+  const HERO_AMMO_COST = 15;
+  const INFANTRY_AMMO_COST = 1;
+  const INITIAL_NON_SENTRY_AMMO = 0;
+  const START_GOLD = 300;
+  const GOLD_PER_MINUTE = 90;
+  const GOLD_PER_KILL = 30;
+  // 高速直射弹道：发射后方向恒定，不进行任何追踪或转向。
+  const BULLET_SPEED = 260;
+  const MUZZLE_SCATTER = 0.012;
+  // 默认弹丸最多飞过半个场地长边；装配模块可通过 projectileRangeBonus 扩展。
+  const BULLET_MAX_DISTANCE = LOGIC_W * 0.5;
+  const ROBOT_DAMAGE = { hero: 200, infantry: 20, sentry: 20 };
+
+  // 机器人基础规格（会被零件属性覆盖/叠加）
+  // 体积统一缩小并按类型区分：英雄长方形、步兵圆形、哨兵三角形
+  const ROBOT_BASE = {
+    hero: { name: '英雄', hp: 500, size: 4.5, baseSpeed: 1.9, color: '#ff4757', shape: 'rect' },
+    infantry: { name: '步兵', hp: 280, size: 3, baseSpeed: 3.4, color: '#ff6b81', shape: 'circle' },
+    // Sentry wheel-legs are deliberately moderate so terrain immunity does not
+    // become a universal speed advantage.
+    sentry: { name: '哨兵', hp: 650, size: 4, baseSpeed: 1.2, color: '#c0392b', shape: 'triangle' }
+  };
+
+  // 整机约束
+  const CONSTRAINTS = {
+    // Higher power budgets allow more varied weapon/module combinations.
+    // Overload penalties still apply when a build exceeds these limits in play.
+    // Heroes are intentionally permissive; infantry has a tighter budget so
+    // the heavy wheel-leg chassis creates a meaningful equipment tradeoff.
+    hero: { maxWeight: 14500, maxPower: 105, maxHeight: 500 },
+    infantry: { maxWeight: 8000, maxPower: 80, maxHeight: 360 },
+    sentry: { maxWeight: 14500, maxPower: 110, maxHeight: 480 }
+  };
+
+  // ============ 零件数据库 ============
+  const PARTS = {
+    hero: {
+      chassis: [
+        { id: 'h_ch1', name: '标准轮式底盘 H', desc: '均衡可靠，成本低。', weight: 4200, power: 35, height: 180,
+          effects: { hp: 0, speed: 0, mobility: 'wheeled' } },
+        { id: 'h_ch2', name: '重型轮腿底盘 H', desc: '重量与功耗更高，稳定性更好。', weight: 5800, power: 48, height: 220,
+          effects: { hp: 50, speed: -0.3, mobility: 'wheel-leg' } },
+        { id: 'h_ch3', name: '轻型轮式底盘 H', desc: '极致机动，但防护薄弱。', weight: 3400, power: 28, height: 160,
+          effects: { hp: -30, speed: 0.5, mobility: 'wheeled' } }
+      ],
+      weapon: [
+        { id: 'h_wp1', name: '47mm 标准发射器', desc: '官方规格大弹丸，单发 200 伤害，2 发连射后进入长冷却。', weight: 3200, power: 32, height: 120,
+          effects: { bulletType: '47mm', dmg: 200, rof: 4, heatInc: 100, heatDec: 18, maxHeat: 200, range: 95,
+                     burstSize: 2, burstCooldown: 2.8, ammoCapacity: 40 } },
+        { id: 'h_wp2', name: '47mm 重型发射器', desc: '射程更远、弹丸更重，但发射器更重、冷却更慢。', weight: 4200, power: 42, height: 140,
+          effects: { bulletType: '47mm', dmg: 200, rof: 4, heatInc: 110, heatDec: 14, maxHeat: 220, range: 110,
+                     burstSize: 2, burstCooldown: 3.5, ammoCapacity: 30 } },
+        { id: 'h_wp3', name: '47mm 速射发射器', desc: '射速与散热更快，但射程与载弹量较低。', weight: 2800, power: 36, height: 115,
+          effects: { bulletType: '47mm', dmg: 200, rof: 4, heatInc: 85, heatDec: 28, maxHeat: 180, range: 85,
+                     burstSize: 2, burstCooldown: 2.0, ammoCapacity: 50 } }
+      ],
+      armor: [
+        { id: 'h_ar1', name: '标准装甲 H', desc: '均衡防护。', weight: 1800, power: 8, height: 30,
+          effects: { hp: 80, hitScale: 1.0 } },
+        { id: 'h_ar2', name: '重型装甲 H', desc: '大幅提升血量，但增加重量与受弹面积。', weight: 2800, power: 12, height: 45,
+          effects: { hp: 160, hitScale: 1.15 } },
+        { id: 'h_ar3', name: '轻型装甲 H', desc: '牺牲防护换取机动与隐蔽。', weight: 1000, power: 5, height: 20,
+          effects: { hp: 30, hitScale: 0.92 } }
+      ],
+      module: [
+        { id: 'h_mo1', name: '超级电容模组', desc: '加速移动，提高自转速率与自转反弹率。', weight: 1200, power: -10, height: 25,
+          effects: { powerBonus: 15, speedBonus: 0.12, spinSpeedBonus: 0.35, reflectBonus: 0.15 } },
+        { id: 'h_mo2', name: '高效散热模组', desc: '加快枪管冷却。', weight: 900, power: 6, height: 20,
+          effects: { heatDecBonus: 35 } },
+        { id: 'h_mo3', name: '扩容弹仓', desc: '增加弹药携带量。', weight: 800, power: 4, height: 30,
+          effects: { ammoBonus: 20 } },
+        { id: 'h_mo4', name: '稳定云台', desc: '减少子弹散射，但会降低自转反弹率。', weight: 600, power: 5, height: 15,
+          effects: { stabilityBonus: 0.15, scatterReduction: 0.65, reflectPenalty: 0.12 } },
+        { id: 'h_mo5', name: '自瞄模块', desc: '自动锁定射程内敌人并开火，仅发射瞬间瞄准，子弹不追踪目标。', weight: 1000, power: 8, height: 20,
+          effects: { autoAim: true } }
+      ]
+    },
+    infantry: {
+      chassis: [
+        { id: 'i_ch1', name: '标准轮式底盘 I', desc: '高机动，适合快速支援。', weight: 2800, power: 28, height: 150,
+          effects: { hp: 0, speed: 0, mobility: 'wheeled' } },
+        { id: 'i_ch2', name: '轮腿底盘 I', desc: '越野性能更好，速度略低。', weight: 3600, power: 36, height: 175,
+          effects: { hp: 30, speed: -0.3, mobility: 'wheel-leg' } },
+        { id: 'i_ch3', name: '轻型轮式底盘 I', desc: '极限速度，防护薄弱。', weight: 2200, power: 22, height: 135,
+          effects: { hp: -20, speed: 0.6, mobility: 'wheeled' } }
+      ],
+      weapon: [
+        { id: 'i_wp1', name: '17mm 标准发射器', desc: '官方规格小弹丸，单发 20 伤害，8 发短点射。', weight: 1400, power: 22, height: 90,
+          effects: { bulletType: '17mm', dmg: 20, rof: 9, heatInc: 10, heatDec: 24, maxHeat: 88, range: 70,
+                     burstSize: 8, burstCooldown: 0.9, ammoCapacity: 180 } },
+        { id: 'i_wp2', name: '17mm 连射发射器', desc: '更大弹匣与更快连发，但散热压力大。', weight: 1600, power: 26, height: 95,
+          effects: { bulletType: '17mm', dmg: 20, rof: 9, heatInc: 9, heatDec: 20, maxHeat: 100, range: 65,
+                     burstSize: 12, burstCooldown: 1.1, ammoCapacity: 240 } },
+        { id: 'i_wp3', name: '17mm 精准发射器', desc: '射程提升、射速较慢，适合中远距离压制。', weight: 1500, power: 24, height: 88,
+          effects: { bulletType: '17mm', dmg: 20, rof: 9, heatInc: 12, heatDec: 28, maxHeat: 80, range: 85,
+                     burstSize: 6, burstCooldown: 0.7, ammoCapacity: 140 } }
+      ],
+      armor: [
+        { id: 'i_ar1', name: '标准装甲 I', desc: '均衡防护。', weight: 1200, power: 6, height: 25,
+          effects: { hp: 50, hitScale: 1.0 } },
+        { id: 'i_ar2', name: '重型装甲 I', desc: '高血量但笨重。', weight: 1800, power: 9, height: 35,
+          effects: { hp: 100, hitScale: 1.12 } },
+        { id: 'i_ar3', name: '轻型装甲 I', desc: '低受弹面积与高速。', weight: 700, power: 4, height: 18,
+          effects: { hp: 20, hitScale: 0.9 } }
+      ],
+      module: [
+        { id: 'i_mo1', name: '超级电容模组', desc: '加速移动，提高自转速率与自转反弹率。', weight: 900, power: -8, height: 22,
+          effects: { powerBonus: 12, speedBonus: 0.10, spinSpeedBonus: 0.35, reflectBonus: 0.15 } },
+        { id: 'i_mo2', name: '高效散热模组', desc: '加快枪管冷却。', weight: 700, power: 5, height: 18,
+          effects: { heatDecBonus: 30 } },
+        { id: 'i_mo3', name: '扩容弹仓', desc: '增加弹药携带量。', weight: 600, power: 3, height: 25,
+          effects: { ammoBonus: 40 } },
+        { id: 'i_mo4', name: '稳定云台', desc: '减少子弹散射，但会降低自转反弹率。', weight: 500, power: 4, height: 12,
+          effects: { stabilityBonus: 0.12, scatterReduction: 0.65, reflectPenalty: 0.12 } },
+        { id: 'i_mo5', name: '自瞄模块', desc: '自动锁定射程内敌人并开火，仅发射瞬间瞄准，子弹不追踪目标。', weight: 700, power: 6, height: 18,
+          effects: { autoAim: true } }
+      ]
+    },
+    sentry: {
+      chassis: [
+        { id: 's_ch1', name: '标准轮腿底盘 S', desc: '稳定但速度低。', weight: 5200, power: 42, height: 200,
+          effects: { hp: 80, speed: 0, mobility: 'wheel-leg' } },
+        { id: 's_ch2', name: '重型轮腿底盘 S', desc: '极高血量，极慢速度。', weight: 6800, power: 54, height: 230,
+          effects: { hp: 160, speed: -0.4, mobility: 'wheel-leg' } },
+        { id: 's_ch3', name: '轻型轮腿底盘 S', desc: '速度较快但防护一般。', weight: 4200, power: 35, height: 185,
+          effects: { hp: 30, speed: 0.3, mobility: 'wheel-leg' } }
+      ],
+      weapon: [
+        { id: 's_wp1', name: '17mm 哨兵发射器', desc: '官方规格，单发 20 伤害，10 发连射后短冷却。', weight: 1800, power: 28, height: 100,
+          effects: { bulletType: '17mm', dmg: 20, rof: 12, heatInc: 10, heatDec: 30, maxHeat: 260, range: 80,
+                     burstSize: 10, burstCooldown: 1.0, ammoCapacity: 750 } },
+        { id: 's_wp2', name: '17mm 哨兵速射', desc: '更高射速，更大弹药基数，但散热压力更大。', weight: 2000, power: 32, height: 105,
+          effects: { bulletType: '17mm', dmg: 20, rof: 12, heatInc: 9, heatDec: 26, maxHeat: 280, range: 75,
+                     burstSize: 14, burstCooldown: 1.2, ammoCapacity: 900 } },
+        { id: 's_wp3', name: '17mm 哨兵狙击', desc: '长射程，射速慢，适合阵地压制。', weight: 1900, power: 30, height: 102,
+          effects: { bulletType: '17mm', dmg: 20, rof: 12, heatInc: 14, heatDec: 34, maxHeat: 240, range: 100,
+                     burstSize: 8, burstCooldown: 0.9, ammoCapacity: 600 } }
+      ],
+      armor: [
+        { id: 's_ar1', name: '标准装甲 S', desc: '均衡防护。', weight: 2200, power: 10, height: 35,
+          effects: { hp: 100, hitScale: 1.0 } },
+        { id: 's_ar2', name: '重型装甲 S', desc: '极高血量。', weight: 3400, power: 15, height: 50,
+          effects: { hp: 200, hitScale: 1.15 } },
+        { id: 's_ar3', name: '轻型装甲 S', desc: '低受弹面积。', weight: 1400, power: 7, height: 25,
+          effects: { hp: 50, hitScale: 0.9 } }
+      ],
+      module: [
+        { id: 's_mo1', name: '超级电容模组', desc: '适度加速移动，提高自转速率与自转反弹率。', weight: 1400, power: -12, height: 28,
+          effects: { powerBonus: 14, speedBonus: 0.05, spinSpeedBonus: 0.30, reflectBonus: 0.12 } },
+        { id: 's_mo2', name: '高效散热模组', desc: '加快枪管冷却。', weight: 1100, power: 8, height: 22,
+          effects: { heatDecBonus: 45 } },
+        { id: 's_mo3', name: '扩容弹仓', desc: '增加弹药携带量。', weight: 1000, power: 5, height: 32,
+          effects: { ammoBonus: 150 } },
+        { id: 's_mo4', name: '稳定云台', desc: '减少子弹散射，但会降低自转反弹率。', weight: 800, power: 6, height: 16,
+          effects: { stabilityBonus: 0.1, scatterReduction: 0.65, reflectPenalty: 0.12 } },
+        { id: 's_mo5', name: '自瞄模块', desc: '自动锁定射程内敌人并开火，仅发射瞬间瞄准，子弹不追踪目标。', weight: 900, power: 7, height: 18,
+          effects: { autoAim: true } }
+      ]
+    }
+  };
+
+  // 模块平衡：每个模块都有明确的数值收益与代价，并在装配界面展示。
+  const MODULE_BALANCE = {
+    mo1: { advantage: '功率上限 +12W；移动速度 +10%；自转速度 +35%；反弹率 +15%', disadvantage: '占用重量/高度较高；不提供散热或弹药收益', effects: { speedBonus: 0.10, spinSpeedBonus: 0.35, reflectBonus: 0.15 } },
+    mo2: { advantage: '枪管散热 +8（英雄/步兵）或 +12（哨兵）', disadvantage: '散热模块增加重量，移动速度 -5%；无法增加弹药或伤害', effects: { speedBonus: -0.05 } },
+    mo3: { advantage: '弹药仓容量提升（按单位规则生效）', disadvantage: '弹药仓增加重量和高度；移动速度 -4%', effects: { speedBonus: -0.04 } },
+    mo4: { advantage: '散射降低 65%，命中稳定性提升', disadvantage: '自转反弹率降低 12%；模块本身不提升伤害', effects: { reflectPenalty: 0.12 } },
+    mo5: { advantage: '自动选择射程内目标并主动开火；发射瞬间瞄准', disadvantage: '自动瞄准增加热量 +12/发；移动速度 -8%；子弹不追踪', effects: { speedBonus: -0.08, heatIncBonus: 12 } }
+  };
+  Object.values(PARTS).forEach(robotParts => {
+    (robotParts.module || []).forEach(module => {
+      const key = module.id.slice(2); // h_mo3 -> mo3
+      const balance = MODULE_BALANCE[key];
+      if (!balance) return;
+      module.advantage = balance.advantage;
+      module.disadvantage = balance.disadvantage;
+      module.effects = { ...module.effects, ...balance.effects };
+    });
+  });
+
+  // ============ 地图数据 ============
+  // 场地总尺寸 16m x 9m，逻辑单位 1 = 50mm（即 1m = 20 逻辑单位）
+  const MapData = {
+    // 实体碰撞墙体：实心障碍物，所有机器人不可穿过，子弹击中销毁
+    walls: [
+      // 障碍物A：左侧竖墙体，内侧贴控制区左边缘，宽度 2.5m，长度 6m
+      {x: 85, y: 0, w: 50, h: 120},
+      // 障碍物B：右侧竖墙体，内侧贴控制区右边缘，宽度 2.5m，长度 6m
+      {x: 185, y: 60, w: 50, h: 120}
+    ],
+
+    // 中央控制占领区：x:6.75-9.25, y:3.25-5.75
+    controlZone: {x: 135, y: 65, w: 50, h: 50},
+
+    // 红方补给区：x:0-2, y:0-2
+    supplyZones: [
+      {x: 0, y: 0, w: 40, h: 40, team: 'red'},
+      // 蓝方补给区：x:14-16, y:7-9
+      {x: 280, y: 140, w: 40, h: 40, team: 'blue'}
+    ],
+
+    // 启动区/复活区：与补给区重合
+    startZones: [
+      {x: 0, y: 0, w: 40, h: 40, team: 'red'},
+      {x: 280, y: 140, w: 40, h: 40, team: 'blue'}
+    ],
+
+    // 哨兵出生点：补给区外侧边缘附近
+    sentrySpawn: {
+      red: {x: 20, y: 50},
+      blue: {x: 300, y: 130}
+    }
+  };
+
+  // ============ 工具函数 ============
+  const U = {
+    clamp(v, a, b) { return Math.max(a, Math.min(b, v)); },
+    dist(a, b) { return Number.isFinite(a.x) && Number.isFinite(a.y) && Number.isFinite(b.x) && Number.isFinite(b.y) ? Math.hypot(a.x - b.x, a.y - b.y) : Infinity; },
+    distXY(a, x, y) { return Number.isFinite(a.x) && Number.isFinite(a.y) && Number.isFinite(x) && Number.isFinite(y) ? Math.hypot(a.x - x, a.y - y) : Infinity; },
+    angle(a, b) { return Number.isFinite(a.x) && Number.isFinite(a.y) && Number.isFinite(b.x) && Number.isFinite(b.y) ? Math.atan2(b.y - a.y, b.x - a.x) : 0; },
+    angleXY(a, x, y) { return Number.isFinite(a.x) && Number.isFinite(a.y) && Number.isFinite(x) && Number.isFinite(y) ? Math.atan2(y - a.y, x - a.x) : 0; },
+    norm(v) { const l = Math.hypot(v.x, v.y) || 1; return Number.isFinite(v.x) && Number.isFinite(v.y) ? { x: v.x / l, y: v.y / l } : { x: 0, y: 0 }; },
+    rand(a, b) { return a + Math.random() * (b - a); },
+    formatTime(s) {
+      const m = Math.floor(s / 60), sec = Math.floor(s % 60);
+      return `${m.toString().padStart(2, '0')}:${sec.toString().padStart(2, '0')}`;
+    },
+    teamColor(team) { return team === 'red' ? '#ff4757' : '#2e86de'; },
+    teamName(team) { return team === 'red' ? '红方' : '蓝方'; },
+    rectCirclePush(c, r) {
+      const cx = U.clamp(c.x, r.x, r.x + r.w);
+      const cy = U.clamp(c.y, r.y, r.y + r.h);
+      const dx = c.x - cx, dy = c.y - cy;
+      const d2 = dx * dx + dy * dy;
+      if (d2 < c.r * c.r && d2 > 0.0001) {
+        const d = Math.sqrt(d2), push = c.r - d;
+        return { x: c.x - dx / d * push, y: c.y - dy / d * push };
+      }
+      if (d2 <= 0.0001) {
+        const left = c.x - r.x, right = r.x + r.w - c.x, top = c.y - r.y, bottom = r.y + r.h - c.y;
+        const min = Math.min(left, right, top, bottom);
+        if (min === left) return { x: r.x - c.r, y: c.y };
+        if (min === right) return { x: r.x + r.w + c.r, y: c.y };
+        if (min === top) return { x: c.x, y: r.y - c.r };
+        return { x: c.x, y: r.y + r.h + c.r };
+      }
+      return null;
+    },
+    pointLineDistance(p, a, b) {
+      const ab = { x: b.x - a.x, y: b.y - a.y };
+      const ap = { x: p.x - a.x, y: p.y - a.y };
+      const len2 = ab.x * ab.x + ab.y * ab.y;
+      if (len2 < 0.0001) return Math.hypot(ap.x, ap.y);
+      const t = U.clamp((ap.x * ab.x + ap.y * ab.y) / len2, 0, 1);
+      const proj = { x: a.x + ab.x * t, y: a.y + ab.y * t };
+      return Math.hypot(p.x - proj.x, p.y - proj.y);
+    },
+    segmentsIntersect(x1, y1, x2, y2, x3, y3, x4, y4) {
+      const d = (x2 - x1) * (y4 - y3) - (y2 - y1) * (x4 - x3);
+      if (Math.abs(d) < 0.0001) return false;
+      const t = ((x3 - x1) * (y4 - y3) - (y3 - y1) * (x4 - x3)) / d;
+      const u = ((x3 - x1) * (y2 - y1) - (y3 - y1) * (x2 - x1)) / d;
+      return t >= 0 && t <= 1 && u >= 0 && u <= 1;
+    },
+    segmentDistance(a1, a2, b1, b2) {
+      if (this.segmentsIntersect(a1.x, a1.y, a2.x, a2.y, b1.x, b1.y, b2.x, b2.y)) return 0;
+      return Math.min(
+        this.pointLineDistance(a1, b1, b2),
+        this.pointLineDistance(a2, b1, b2),
+        this.pointLineDistance(b1, a1, a2),
+        this.pointLineDistance(b2, a1, a2)
+      );
+    },
+    lineIntersectsRect(x1, y1, x2, y2, r) {
+      const edges = [
+        [r.x, r.y, r.x + r.w, r.y],
+        [r.x + r.w, r.y, r.x + r.w, r.y + r.h],
+        [r.x + r.w, r.y + r.h, r.x, r.y + r.h],
+        [r.x, r.y + r.h, r.x, r.y]
+      ];
+      return edges.some(e => this.segmentsIntersect(x1, y1, x2, y2, e[0], e[1], e[2], e[3]));
+    },
+    lineHitsWall(x1, y1, x2, y2, radius = 0) {
+      return MapData.walls.some(w => this.lineIntersectsRect(x1, y1, x2, y2, {
+        x: w.x - radius, y: w.y - radius,
+        w: w.w + radius * 2, h: w.h + radius * 2
+      }));
+    },
+    gridPath(sx, sy, tx, ty, radius = 0, routeBias = 0) {
+      const CS = 5, GW = 64, GH = 36;
+      const key = (x, y) => `${x},${y}`;
+      const gx0 = Math.min(GW - 1, Math.max(0, Math.floor(sx / CS)));
+      const gy0 = Math.min(GH - 1, Math.max(0, Math.floor(sy / CS)));
+      const gx1 = Math.min(GW - 1, Math.max(0, Math.floor(tx / CS)));
+      const gy1 = Math.min(GH - 1, Math.max(0, Math.floor(ty / CS)));
+      if (gx0 === gx1 && gy0 === gy1) return [{ x: tx, y: ty }];
+      const blocked = new Set();
+      for (const w of MapData.walls) {
+        // 将墙体按机器人半径膨胀，避免 A* 给出机器人实际无法通过的贴墙路径
+        const x0 = Math.max(0, Math.floor((w.x - radius) / CS));
+        const x1 = Math.min(GW - 1, Math.floor((w.x + w.w + radius - 0.001) / CS));
+        const y0 = Math.max(0, Math.floor((w.y - radius) / CS));
+        const y1 = Math.min(GH - 1, Math.floor((w.y + w.h + radius - 0.001) / CS));
+        for (let x = x0; x <= x1; x++) {
+          for (let y = y0; y <= y1; y++) blocked.add(key(x, y));
+        }
+      }
+      const sk = key(gx0, gy0), gk = key(gx1, gy1);
+      blocked.delete(sk); blocked.delete(gk);
+      const came = new Map();
+      const gscore = new Map();
+      const open = [{ x: gx0, y: gy0, f: 0 }];
+      gscore.set(sk, 0);
+      came.set(sk, null);
+      const closed = new Set();
+      while (open.length) {
+        let idx = 0;
+        for (let i = 1; i < open.length; i++) if (open[i].f < open[idx].f) idx = i;
+        const cur = open.splice(idx, 1)[0];
+        const ck = key(cur.x, cur.y);
+        if (closed.has(ck)) continue;
+        closed.add(ck);
+        if (cur.x === gx1 && cur.y === gy1) break;
+        const dirs = routeBias < 0
+          ? [[0, -1], [1, 0], [-1, 0], [0, 1]]
+          : [[0, 1], [1, 0], [-1, 0], [0, -1]];
+        for (const [dx, dy] of dirs) {
+          const nx = cur.x + dx, ny = cur.y + dy;
+          if (nx < 0 || nx >= GW || ny < 0 || ny >= GH) continue;
+          const nk = key(nx, ny);
+          if (blocked.has(nk) || closed.has(nk)) continue;
+          const ng = (gscore.get(ck) || 0) + 1;
+          const old = gscore.get(nk) || Infinity;
+          if (ng < old) {
+            gscore.set(nk, ng);
+            came.set(nk, { x: cur.x, y: cur.y });
+            const f = ng + Math.abs(nx - gx1) + Math.abs(ny - gy1);
+            const existing = open.find(n => n.x === nx && n.y === ny);
+            if (existing) existing.f = f; else open.push({ x: nx, y: ny, f });
+          }
+        }
+      }
+      if (!came.has(gk)) return null;
+      const cells = [];
+      let cx = gx1, cy = gy1;
+      while (true) {
+        cells.push({ x: cx, y: cy });
+        const p = came.get(key(cx, cy));
+        if (!p) break;
+        cx = p.x; cy = p.y;
+      }
+      cells.reverse();
+      return cells.map((c, i) => i === cells.length - 1 ? { x: tx, y: ty } : { x: c.x * CS + CS / 2, y: c.y * CS + CS / 2 });
+    }
+  };
+
+  // ============ 输入处理 ============
+  const Input = {
+    keys: {},
+    pressed: {},
+    mouse: { x: 0, y: 0, down: false, clicked: false, selecting: false },
+    init() {
+      window.addEventListener('keydown', e => {
+        // 阻止空格键滚动页面
+        if (e.code === 'Space') {
+          e.preventDefault();
+          // 只在空格从未按下到按下的瞬间产生一次切换事件，忽略浏览器按键连发。
+          if (!this.keys['space']) this.pressed['space'] = true;
+          this.keys['space'] = true;
+          this.keys[' '] = true;
+          return;
+        }
+        const k = e.key.toLowerCase();
+        if (!this.keys[k]) this.pressed[k] = true;
+        this.keys[k] = true;
+      });
+      window.addEventListener('keyup', e => {
+        this.keys[e.key.toLowerCase()] = false;
+        if (e.code === 'Space') this.keys['space'] = false;
+      });
+      const canvas = document.getElementById('gameCanvas');
+      canvas.addEventListener('mousemove', e => {
+        const rect = canvas.getBoundingClientRect();
+        this.mouse.x = (e.clientX - rect.left) * (LOGIC_W / rect.width);
+        this.mouse.y = (e.clientY - rect.top) * (LOGIC_H / rect.height);
+      });
+      canvas.addEventListener('mousedown', e => {
+        const rect = canvas.getBoundingClientRect();
+        const mx = (e.clientX - rect.left) * (LOGIC_W / rect.width);
+        const my = (e.clientY - rect.top) * (LOGIC_H / rect.height);
+        const own = Game.state && Game.state.robots
+          .filter(r => r.team === 'red' && !r.dead)
+          .sort((a, b) => U.distXY(a, mx, my) - U.distXY(b, mx, my))
+          .find(r => U.distXY(r, mx, my) <= r.size * r.hitScale + 3);
+        this.mouse.selecting = !!own;
+        if (own) {
+          Game.selectRobot(own);
+          this.mouse.down = true; this.mouse.clicked = true;
+          return;
+        }
+        this.mouse.down = true; this.mouse.clicked = true;
+        this.pressed['mousedown'] = true;
+      });
+      canvas.addEventListener('mouseup', () => { this.mouse.down = false; this.mouse.selecting = false; });
+    },
+    consume(k) {
+      const v = this.pressed[k];
+      this.pressed[k] = false;
+      return v;
+    }
+  };
+
+  // ============ 子弹物理系统 ============
+  const BulletSys = {
+    fire(owner, angle) {
+      const muzzleLen = owner.size + 2;
+      // 弹丸速度只由炮口方向决定；绝不叠加 owner 的 vx/vy 或本帧位移增量。
+      const dirX = Math.cos(angle);
+      const dirY = Math.sin(angle);
+      const vx = dirX * BULLET_SPEED;
+      const vy = dirY * BULLET_SPEED;
+      const is47 = owner.bulletType === '47mm';
+      return {
+        x: owner.x + Math.cos(angle) * muzzleLen,
+        y: owner.y + Math.sin(angle) * muzzleLen,
+        vx, vy,
+        dirX, dirY,
+        speed: BULLET_SPEED,
+        angle,
+        maxDistance: Math.max(BULLET_MAX_DISTANCE, Number(owner.projectileRange) || 0),
+        travelDistance: 0,
+        owner, team: owner.team,
+        type: owner.bulletType,
+        dmg: Math.round(Number(owner.dmg) || 0),
+        size: is47 ? 2.2 : 1.0,
+        born: Game.state.time,
+        life: 1.2,
+        // 只有站在挡墙内的轮腿机器人，子弹才允许穿透挡墙
+        hit: false
+      };
+    },
+    update(bullets, dt) {
+      for (let i = bullets.length - 1; i >= 0; i--) {
+        const b = bullets[i];
+        b.life -= dt;
+        if (b.life <= 0) { bullets.splice(i, 1); continue; }
+        // 发射后只按初始方向更新位置，速度和方向在整个飞行期间保持恒定。
+        const prevX = b.x, prevY = b.y;
+        // 只使用弹丸自身的初始方向和固定速度；不读取发射者的任何移动量。
+        const stepDistance = b.speed * dt;
+        b.x += b.dirX * stepDistance;
+        b.y += b.dirY * stepDistance;
+        b.travelDistance += stepDistance;
+        if (b.x < 0 || b.x > LOGIC_W || b.y < 0 || b.y > LOGIC_H) { bullets.splice(i, 1); continue; }
+
+        // 普通子弹受挡墙阻挡；站在挡墙内的轮腿机器人子弹无视地形
+        // 子弹允许穿墙；墙体只影响机器人移动。
+
+        // 装甲板受击判定
+        let hit = null, hitPlate = null;
+        for (const r of Game.state.robots) {
+          if (r.team === b.team || r.dead || r.disabled || r.invincible) continue;
+          const plates = r.getArmorPlates();
+          for (const plate of plates) {
+            // 只有弹丸扫过装甲板实体（含弹丸半径与装甲厚度）才算命中。
+            const plateDistance = U.segmentDistance(
+              { x: prevX, y: prevY }, { x: b.x, y: b.y },
+              { x: plate.x1, y: plate.y1 }, { x: plate.x2, y: plate.y2 }
+            );
+            if (plateDistance <= b.size + plate.thickness * 0.5) {
+              hit = r; hitPlate = plate; break;
+            }
+          }
+          if (hit) break;
+        }
+
+        if (hit) {
+          // 自转模式反弹判定
+          const reflectChance = U.clamp(0.33 + (Number(hit.reflectBonus) || 0) - (Number(hit.reflectPenalty) || 0), 0, 0.95);
+          if (hit.spinMode && Math.random() < reflectChance) {
+            Game.spawnParticles(b.x, b.y, '#ffffff', 4);
+            Game.log(`${hit.name} 的装甲板反弹了子弹`, hit.team);
+          } else {
+            Game.applyDamage(hit, b.dmg, b.owner);
+            Game.spawnParticles(hit.x, hit.y, U.teamColor(hit.team), 5);
+          }
+          bullets.splice(i, 1);
+          continue;
+        }
+        // 达到最大攻击距离后弹丸消失，不会继续存在于场地边缘。
+        if (b.travelDistance >= b.maxDistance) {
+          bullets.splice(i, 1);
+          continue;
+        }
+      }
+    }
+  };
+
+  // ============ 组装系统 ============
+  const Assembly = {
+    currentType: 'hero',
+    builds: {
+      hero: { chassis: null, weapon: null, armor: null, modules: [null, null] },
+      infantry: { chassis: null, weapon: null, armor: null, modules: [null, null] },
+      sentry: { chassis: null, weapon: null, armor: null, modules: [null, null] }
+    },
+
+    init() {
+      // 默认装配：每个机体装备每个槽位的第一个零件，方便直接开始
+      ['hero', 'infantry', 'sentry'].forEach(type => {
+        const build = this.builds[type];
+        ['chassis', 'weapon', 'armor'].forEach(cat => {
+          build[cat] = PARTS[type][cat][0];
+        });
+        build.modules[0] = PARTS[type].module[0];
+      });
+      this.renderTabs();
+      this.renderPartsLibrary();
+      this.renderSlots();
+      this.renderStats();
+      this.updateStartButton();
+    },
+
+    selectType(type) {
+      this.currentType = type;
+      this.renderTabs();
+      this.renderPartsLibrary();
+      this.renderSlots();
+      this.renderStats();
+    },
+
+    getSlotCategories() {
+      return ['chassis', 'weapon', 'armor', 'module'];
+    },
+
+    equipPart(part) {
+      const type = this.currentType;
+      const build = this.builds[type];
+      if (part.type === 'module') {
+        if (!Array.isArray(build.modules)) build.modules = [null, null];
+        const wheelLeg = build.chassis && build.chassis.effects && build.chassis.effects.mobility === 'wheel-leg';
+        if (wheelLeg) {
+          // 轮腿底盘只有一个模块槽位，后续选择的模块替换第一个模块。
+          build.modules[0] = part;
+          build.modules[1] = null;
+        } else {
+          const idx = build.modules.findIndex(m => m === null);
+          if (idx >= 0) build.modules[idx] = part;
+          else build.modules[0] = part; // 覆盖第一个
+        }
+      } else {
+        build[part.type] = part;
+        if (part.type === 'chassis' && part.effects && part.effects.mobility === 'wheel-leg') {
+          // 切换到轮腿时立即移除第二模块，保证装配状态与规则一致。
+          build.modules[1] = null;
+        }
+      }
+      this.renderPartsLibrary();
+      this.renderSlots();
+      this.renderStats();
+      this.updateStartButton();
+    },
+
+    removePart(partType, moduleIdx) {
+      const build = this.builds[this.currentType];
+      if (partType === 'module') {
+        if (!Array.isArray(build.modules)) build.modules = [null, null];
+        const idx = Number.isInteger(Number(moduleIdx)) ? Number(moduleIdx) : 0;
+        build.modules[idx] = null;
+      }
+      else build[partType] = null;
+      this.renderPartsLibrary();
+      this.renderSlots();
+      this.renderStats();
+      this.updateStartButton();
+    },
+
+    computeStats(type) {
+      const build = this.builds[type];
+      const base = ROBOT_BASE[type];
+      const cons = CONSTRAINTS[type];
+      const parts = [build.chassis, build.weapon, build.armor, ...build.modules].filter(Boolean);
+      const stats = {
+        weight: parts.reduce((s, p) => s + p.weight, 0),
+        power: parts.reduce((s, p) => s + p.power, 0),
+        totalHeight: parts.reduce((s, p) => s + p.height, base.size * 20), // 机体基础高度
+        hp: base.hp,
+        speed: base.baseSpeed,
+        mobility: 'wheeled',
+        bulletType: null,
+        dmg: 0,
+        rof: 0,
+        heatInc: 0,
+        heatIncBonus: 0,
+        heatDec: 0,
+        maxHeat: 0,
+        range: 0,
+        projectileRangeBonus: 0,
+        burstSize: 0,
+        burstCooldown: 0,
+        ammoCapacity: 0,
+        hitScale: 1.0,
+        stabilityBonus: 0,
+        powerBonus: 0,
+        speedBonus: 0,
+        spinSpeedBonus: 0,
+        reflectBonus: 0,
+        scatterReduction: 0,
+        reflectPenalty: 0,
+        autoAim: false,
+        aimAssist: 0
+      };
+      parts.forEach(p => {
+        stats.hp += p.effects.hp || 0;
+        stats.speed += p.effects.speed || 0;
+        if (p.effects.mobility) stats.mobility = p.effects.mobility;
+        stats.powerBonus += p.effects.powerBonus || 0;
+        stats.speedBonus += p.effects.speedBonus || 0;
+        stats.spinSpeedBonus += p.effects.spinSpeedBonus || 0;
+        stats.reflectBonus += p.effects.reflectBonus || 0;
+        stats.scatterReduction += p.effects.scatterReduction || 0;
+        stats.reflectPenalty += p.effects.reflectPenalty || 0;
+        stats.heatDec += p.effects.heatDecBonus || 0;
+        stats.heatIncBonus += p.effects.heatIncBonus || 0;
+        stats.ammoCapacity += p.effects.ammoBonus || 0;
+        stats.projectileRangeBonus += p.effects.projectileRangeBonus || 0;
+        stats.stabilityBonus += p.effects.stabilityBonus || 0;
+        if (p.effects.autoAim) {
+          stats.autoAim = true;
+          // 自瞄模块提供较高的射击稳定性，配合预测点提高命中率。
+          stats.aimAssist = Math.max(stats.aimAssist, p.effects.aimAssist || 0.85);
+        }
+        stats.aimAssist = Math.max(stats.aimAssist, p.effects.aimAssist || 0);
+        if (p.effects.hitScale) stats.hitScale = p.effects.hitScale;
+        if (p.effects.bulletType) {
+          stats.bulletType = p.effects.bulletType;
+          stats.dmg = p.effects.dmg;
+          stats.rof = p.effects.rof;
+          stats.heatInc = p.effects.heatInc;
+          stats.heatDec += p.effects.heatDec;
+          stats.maxHeat = p.effects.maxHeat;
+          stats.range = p.effects.range;
+          stats.burstSize = p.effects.burstSize;
+          stats.burstCooldown = p.effects.burstCooldown;
+          stats.ammoCapacity += p.effects.ammoCapacity;
+        }
+      });
+      stats.heatInc += stats.heatIncBonus;
+      if (stats.mobility === 'wheel-leg') {
+        // 轮腿底盘越野能力强，但转向/自转机构更慢且反弹结构较弱。
+        stats.reflectPenalty += 0.12;
+      }
+      // 英雄/步兵弹药仓容量固定：英雄 12/26 发，步兵 60/180 发（安装对应扩容弹仓后取高值）。
+      if (type === 'hero' || type === 'infantry') {
+        const ammoModuleId = type === 'hero' ? 'h_mo3' : 'i_mo3';
+        const hasAmmoStorage = build.modules.some(m => m && m.id === ammoModuleId);
+        stats.ammoCapacity = type === 'hero'
+          ? (hasAmmoStorage ? 26 : 12)
+          : (hasAmmoStorage ? 180 : 60);
+      }
+      // 武器伤害按机器人类型固定，并统一为整数
+      stats.dmg = ROBOT_DAMAGE[type];
+      // 高度影响
+      const heightRatio = U.clamp(stats.totalHeight / cons.maxHeight, 0, 1);
+      stats.speed *= (1 + (1 - heightRatio) * 0.25 - heightRatio * 0.15);
+      stats.stabilityBonus += (1 - heightRatio) * 0.1 - heightRatio * 0.1;
+      stats.hitScale *= (1 + heightRatio * 0.1);
+      // 约束
+      const wheelLegOverModules = stats.mobility === 'wheel-leg' && build.modules.filter(Boolean).length > 1;
+      stats.valid = stats.weight <= cons.maxWeight && stats.totalHeight <= cons.maxHeight && !wheelLegOverModules && build.chassis && build.weapon && build.armor;
+      stats.errors = [];
+      if (stats.weight > cons.maxWeight) stats.errors.push(`超重 ${(stats.weight - cons.maxWeight).toFixed(0)}g`);
+      if (stats.power > cons.maxPower + stats.powerBonus) stats.errors.push(`超功率 ${(stats.power - cons.maxPower - stats.powerBonus).toFixed(1)}W`);
+      if (stats.totalHeight > cons.maxHeight) stats.errors.push(`超高 ${(stats.totalHeight - cons.maxHeight).toFixed(0)}mm`);
+      if (wheelLegOverModules) stats.errors.push('轮腿底盘只能安装 1 个模块');
+      if (!build.chassis || !build.weapon || !build.armor) stats.errors.push('缺少必要部件');
+      return stats;
+    },
+
+    validateAll() {
+      return ['hero', 'infantry', 'sentry'].every(t => this.computeStats(t).valid);
+    },
+
+    renderTabs() {
+      const box = document.getElementById('robotTabs');
+      box.innerHTML = '';
+      ['hero', 'infantry', 'sentry'].forEach(type => {
+        const stats = this.computeStats(type);
+        const btn = document.createElement('div');
+        btn.className = `robot-tab ${this.currentType === type ? 'active' : ''}`;
+        btn.innerHTML = `${ROBOT_BASE[type].name}<span class="valid-badge ${stats.valid ? 'ok' : ''}"></span>`;
+        btn.onclick = () => this.selectType(type);
+        box.appendChild(btn);
+      });
+    },
+
+    renderPartsLibrary() {
+      const box = document.getElementById('partsLibrary');
+      box.innerHTML = '';
+      const type = this.currentType;
+      const build = this.builds[type];
+      this.getSlotCategories().forEach(cat => {
+        const catDiv = document.createElement('div');
+        catDiv.className = 'part-category';
+        const title = { chassis: '底盘', weapon: '武器', armor: '装甲', module: '模块' }[cat];
+        catDiv.innerHTML = `<h4>${title}</h4>`;
+        const list = PARTS[type][cat] || [];
+        list.forEach(part => {
+          const p = { ...part, type: cat };
+          const isEquipped = cat === 'module'
+            ? build.modules.some(m => m && m.id === part.id)
+            : build[cat] && build[cat].id === part.id;
+          const card = document.createElement('div');
+          card.className = `part-card ${isEquipped ? 'selected' : ''}`;
+          card.innerHTML = `
+            <div class="part-name">${part.name}</div>
+            <div class="part-desc">${part.desc}</div>
+            ${cat === 'module' && part.advantage ? `<div class="part-tradeoff"><span style="color:#2ed573">优势：${part.advantage}</span><br><span style="color:#ff9f43">劣势：${part.disadvantage}</span></div>` : ''}
+            <div class="part-stats">
+              <div class="part-stat"><span>重</span>${part.weight}g</div>
+              <div class="part-stat"><span>功</span>${part.power}W</div>
+              <div class="part-stat"><span>高</span>${part.height}mm</div>
+            </div>
+          `;
+          // Module cards stay clickable after removal; equipPart chooses the
+          // available slot or replaces the first slot when both are occupied.
+          card.onclick = () => this.equipPart(p);
+          catDiv.appendChild(card);
+        });
+        box.appendChild(catDiv);
+      });
+    },
+
+    renderSlots() {
+      const box = document.getElementById('assemblySlots');
+      box.innerHTML = '';
+      const type = this.currentType;
+      const build = this.builds[type];
+      const wheelLeg = build.chassis && build.chassis.effects && build.chassis.effects.mobility === 'wheel-leg';
+      const slots = [
+        { key: 'chassis', label: '底盘', part: build.chassis },
+        { key: 'weapon', label: '武器', part: build.weapon },
+        { key: 'armor', label: '装甲', part: build.armor },
+        { key: 'module', label: '模块1', part: build.modules[0], idx: 0 },
+        { key: 'module', label: wheelLeg ? '模块2（不可用）' : '模块2', part: wheelLeg ? null : build.modules[1], idx: 1, disabled: wheelLeg }
+      ];
+      slots.forEach(s => {
+        const row = document.createElement('div');
+        row.className = `slot-row ${s.part ? 'filled' : ''} ${s.disabled ? 'disabled' : ''}`;
+        row.innerHTML = `
+          <div class="slot-label">${s.label}</div>
+          <div class="slot-content">
+            ${s.part
+              ? `<div class="equipped-name">${s.part.name}</div><div class="equipped-desc">${s.part.desc}</div>${s.part.advantage ? `<div class="equipped-desc" style="color:#2ed573">优势：${s.part.advantage}</div><div class="equipped-desc" style="color:#ff9f43">劣势：${s.part.disadvantage}</div>` : ''}`
+              : `<div class="empty">${s.disabled ? '轮腿底盘减少一个模块槽' : '空槽位'}</div>`}
+          </div>
+          ${s.part ? `<div class="slot-remove">卸下</div>` : ''}
+        `;
+        if (s.part) {
+          row.querySelector('.slot-remove').onclick = () => this.removePart(s.key, s.idx);
+        }
+        box.appendChild(row);
+      });
+    },
+
+    renderStats() {
+      const box = document.getElementById('statsPanel');
+      const type = this.currentType;
+      const stats = this.computeStats(type);
+      const cons = CONSTRAINTS[type];
+      const build = this.builds[type];
+      box.innerHTML = `
+        <div class="stat-block">
+          <h4>基础属性</h4>
+          <div class="stat-line"><span class="label">血量</span><span class="value">${stats.hp.toFixed(0)}</span></div>
+          <div class="stat-line"><span class="label">移速</span><span class="value">${stats.speed.toFixed(2)} m/s</span></div>
+          <div class="stat-line"><span class="label">机动类型</span><span class="value">${stats.mobility === 'wheel-leg' ? '轮腿' : '轮式'}</span></div>
+        </div>
+        <div class="stat-block">
+          <h4>武器性能</h4>
+          <div class="stat-line"><span class="label">弹丸</span><span class="value">${stats.bulletType || '-'}</span></div>
+          <div class="stat-line"><span class="label">伤害</span><span class="value">${stats.dmg || 0}</span></div>
+          <div class="stat-line"><span class="label">射速</span><span class="value">${stats.rof || 0} 发/s</span></div>
+          <div class="stat-line"><span class="label">射程</span><span class="value">${stats.range ? (stats.range * MM_PER_UNIT / 1000).toFixed(1) : 0} m</span></div>
+          <div class="stat-line"><span class="label">弹匣/爆发</span><span class="value">${stats.burstSize || 0} 发</span></div>
+          <div class="stat-line"><span class="label">弹药容量</span><span class="value">${stats.ammoCapacity || 0} 发</span></div>
+        </div>
+        <div class="stat-block">
+          <h4>约束校验</h4>
+          <div class="stat-line"><span class="label">重量 ${stats.weight.toFixed(0)}/${cons.maxWeight}g</span><span class="value ${stats.weight <= cons.maxWeight ? 'ok' : 'warn'}">${stats.weight <= cons.maxWeight ? '通过' : '超限'}</span></div>
+          <div class="stat-bar"><span style="width:${U.clamp(stats.weight / cons.maxWeight * 100, 0, 100)}%; background:${stats.weight <= cons.maxWeight ? '#2ed573' : '#ff4757'}"></span></div>
+          <div class="stat-line"><span class="label">功耗 ${stats.power.toFixed(1)}/${cons.maxPower + stats.powerBonus}W</span><span class="value ${stats.power <= cons.maxPower + stats.powerBonus ? 'ok' : 'warn'}">${stats.power <= cons.maxPower + stats.powerBonus ? '通过' : '超限'}</span></div>
+          <div class="stat-bar"><span style="width:${U.clamp(stats.power / (cons.maxPower + stats.powerBonus) * 100, 0, 100)}%; background:${stats.power <= cons.maxPower + stats.powerBonus ? '#2ed573' : '#ff4757'}"></span></div>
+          <div class="stat-line"><span class="label">高度 ${stats.totalHeight.toFixed(0)}/${cons.maxHeight}mm</span><span class="value ${stats.totalHeight <= cons.maxHeight ? 'ok' : 'warn'}">${stats.totalHeight <= cons.maxHeight ? '通过' : '超限'}</span></div>
+          <div class="stat-bar"><span style="width:${U.clamp(stats.totalHeight / cons.maxHeight * 100, 0, 100)}%; background:${stats.totalHeight <= cons.maxHeight ? '#2ed573' : '#ff4757'}"></span></div>
+        </div>
+        <div class="stat-block">
+          <h4>高度影响</h4>
+          <div class="stat-line"><span class="label">受弹缩放</span><span class="value">${stats.hitScale.toFixed(2)}x</span></div>
+          <div class="stat-line"><span class="label">稳定加成</span><span class="value">${(stats.stabilityBonus * 100).toFixed(0)}%</span></div>
+        </div>
+        <div class="validation-box ${stats.valid ? 'ok' : 'err'}">
+          ${stats.valid ? '✓ 该机体验证通过，可进入对战' : '✗ ' + (stats.errors.join('、') || '请完善装配')}
+        </div>
+      `;
+    },
+
+    updateStartButton() {
+      const btn = document.getElementById('startBattleBtn');
+      const ok = this.validateAll();
+      btn.disabled = !ok;
+      btn.textContent = ok ? '进入 3V3 对战' : '请先完成三机体装配校验';
+    },
+
+    getAllBuilds() {
+      return {
+        hero: this.computeStats('hero'),
+        infantry: this.computeStats('infantry'),
+        sentry: this.computeStats('sentry')
+      };
+    }
+  };
+
+  function randomAIBuild(type) {
+    const pick = arr => arr[Math.floor(Math.random() * arr.length)];
+    const list = PARTS[type];
+    for (let tries = 0; tries < 40; tries++) {
+      const chassis = pick(list.chassis), weapon = pick(list.weapon), armor = pick(list.armor);
+      const maxModules = chassis.effects.mobility === 'wheel-leg' ? 1 : 2;
+      const modules = [pick(list.module), maxModules > 1 && Math.random() < 0.45 ? pick(list.module) : null];
+      const build = { chassis, weapon, armor, modules };
+      const stats = Assembly.computeStats.call({ builds: { [type]: build } }, type);
+      if (stats.valid) return stats;
+    }
+    return Assembly.computeStats(type);
+  }
+
+  // ============ 机器人类 ============
+  class Robot {
+    constructor(type, team, index, x, y, buildStats) {
+      const base = ROBOT_BASE[type];
+      this.type = type; this.team = team; this.index = index;
+      this.id = `${team}_${type}_${index}`;
+      this.x = x; this.y = y; this.vx = 0; this.vy = 0;
+      this.angle = team === 'red' ? 0 : Math.PI;
+      this.aimAngle = this.angle;
+
+      // 组装属性
+      this.hp = buildStats.hp;
+      this.maxHp = buildStats.hp;
+      this.speed = buildStats.speed;
+      this.speedBonus = Number(buildStats.speedBonus) || 0;
+      this.spinSpeedBonus = Number(buildStats.spinSpeedBonus) || 0;
+      this.reflectBonus = Number(buildStats.reflectBonus) || 0;
+      this.scatterReduction = U.clamp(Number(buildStats.scatterReduction) || 0, 0, 0.9);
+      this.reflectPenalty = U.clamp(Number(buildStats.reflectPenalty) || 0, 0, 0.9);
+      this.mobility = buildStats.mobility;
+      this.totalHeight = buildStats.totalHeight;
+      this.hitScale = buildStats.hitScale;
+      this.stabilityBonus = buildStats.stabilityBonus;
+      this.powerLimit = CONSTRAINTS[type].maxPower + buildStats.powerBonus;
+      this.weight = buildStats.weight;
+      this.power = buildStats.power;
+
+      // 武器属性
+      this.bulletType = buildStats.bulletType;
+      this.dmg = ROBOT_DAMAGE[type];
+      this.rof = buildStats.rof;
+      this.heatInc = buildStats.heatInc;
+      this.heatDec = buildStats.heatDec;
+      this.maxHeat = buildStats.maxHeat;
+      this.heatLimit = buildStats.maxHeat;
+      this.range = buildStats.range;
+      this.projectileRange = BULLET_MAX_DISTANCE + Math.max(0, Number(buildStats.projectileRangeBonus) || 0);
+      this.burstSize = buildStats.burstSize;
+      this.burstCooldown = buildStats.burstCooldown;
+      this.ammoCapacity = buildStats.ammoCapacity;
+      this.ammo = type === 'sentry' ? buildStats.ammoCapacity : INITIAL_NON_SENTRY_AMMO;
+
+      // 哨兵拥有无限弹药
+      if (this.type === 'sentry') {
+        this.ammo = Infinity;
+        this.ammoCapacity = Infinity;
+      }
+
+      // 外观
+      this.size = base.size;
+      this.shape = base.shape;
+      this.color = team === 'red' ? base.color : (type === 'hero' ? '#2e86de' : (type === 'infantry' ? '#3498db' : '#2980b9'));
+
+      // 状态
+      this.dead = false;
+      this.deathTimer = 0;
+      this.disabled = false;
+      this.cooldown = 0;
+      this.locked = false;
+      this.heat = 0;
+      this.burstCount = 0;
+      this.burstTimer = 0;
+      this.fireBanTimer = 0;
+      this.invincible = false;
+      this.invincibleTimer = 0;
+      this.bufferEnergy = 60;
+      this.maxBufferEnergy = 60;
+      this.totalDamageDealt = 0;
+      this.kills = 0;
+      this.xp = 0;
+
+      // 弹药购买（哨兵无限弹药，英雄/步兵在补给区持续购买）
+      this.isPurchasingAmmo = false;
+      this.ammoBuyAccumulator = 0;
+      this.ammoBuyRate = type === 'hero' ? 8 : (type === 'infantry' ? 25 : 0); // 发/秒
+      this.ammoCost = type === 'hero' ? HERO_AMMO_COST : (type === 'infantry' ? INFANTRY_AMMO_COST : 0); // 金币/发
+
+      // 自转模式
+      this.spinMode = false;
+      this.spinPowerCost = type === 'sentry' ? 25 : 15; // 自转额外功耗 W
+      this.spinAngleSpeed = Math.PI * 1.2 * (1 + this.spinSpeedBonus); // 自转角速度 rad/s
+      if (this.mobility === 'wheel-leg') this.spinAngleSpeed *= 0.55;
+
+      // AI
+      this.autoFire = true;
+      this.autoAim = !!buildStats.autoAim;
+      this.aimAssist = U.clamp(Number(buildStats.aimAssist) || 0, 0, 1);
+      this.aiTarget = null;
+      this.aiTimer = 0;
+      this.aiMode = ['control','flank','hunter','pressure'][Math.floor(Math.random()*4)];
+      this.aiModeTimer = U.rand(6, 14);
+      this.aiMoveTimer = 0;
+      this.aiMoveTarget = null;
+      this.controlHandoffTimer = 0;
+      this.aiStrafeSign = Math.random() < 0.5 ? -1 : 1;
+      this.supplyWanderTarget = null;
+      this.reactionTimer = 0;
+      this.reactionTarget = null;
+      this.reactionSide = Math.random() < 0.5 ? -1 : 1;
+      // 路线偏好：-1 优先上绕，+1 优先下绕；用于等价 A* 路径的稳定选路
+      this.routeBias = Math.random() < 0.5 ? -1 : 1;
+      // Path cache used to commit to a complete detour instead of re-planning beside a wall every frame.
+      this.navPath = null;
+      this.navPathIndex = 0;
+      this.navTargetKey = '';
+      this.navReplanTimer = 0;
+      this.navStuckTimer = 0;
+      this.navEscapeTimer = 0;
+      this.navEscapeSign = Math.random() < 0.5 ? -1 : 1;
+      this.navLastX = this.x;
+      this.navLastY = this.y;
+      this.repairRelease = false;
+      this.moveTarget = null;
+      this.sentryPreset = null;
+      this.sentryStep = 0;
+      this.sentryWait = 0;
+
+      // 跳跃（仅轮腿底盘可跳跃越墙）
+      this.jumping = false;
+      this.airZ = 0;
+      this.jumpT = 0;
+      this.jumpDur = 0.6;      // 跳跃总时长 s
+      this.jumpPeak = 22;      // 跳跃最高高度（逻辑单位，约 1.1m > 墙高 16）
+      this.jumpDir = { x: 0, y: 0 };
+      this.jumpSpeed = 0;
+      this.jumpTarget = null;  // 跳跃落点目标（用于越过墙体）
+      // 轮腿底盘直接无视地形，不再通过跳跃越墙
+      this.ignoresTerrain = String(this.mobility).toLowerCase() === 'wheel-leg';
+      this.canJump = false;
+    }
+
+      getOverpowerRatio() { return Math.max(0, (this.power + (this.spinMode ? this.spinPowerCost : 0) - this.powerLimit) / Math.max(1, this.powerLimit)); }
+
+    getEffectiveSpeed() {
+      let s = this.speed * (1 + this.speedBonus) * (1 - this.getOverpowerRatio() * 0.5);
+      if (this.spinMode) s *= 0.7;
+      if (this.disabled) s *= 0.5;
+      if (this.dead) s = 0;
+      return Math.max(0.3, s);
+    }
+
+      getEffectiveROF() { return Math.max(0.5, this.rof * (1 - this.getOverpowerRatio() * 0.65)); }
+
+    getStability() { return U.clamp(0.7 + this.stabilityBonus, 0.3, 1.0); }
+
+    update(dt) {
+      // 死亡倒计时：5 秒内不能动、不能射
+      if (this.dead) {
+        this.deathTimer -= dt;
+        if (this.deathTimer <= 0) {
+          this.dead = false;
+          this.disabled = true;
+          this.deathTimer = 0;
+          this.heat = 0; this.locked = false;
+          this.burstCount = 0; this.burstTimer = 0;
+          Game.log(`${this.name} 已结束死亡倒计时，进入瘫痪待修状态`, this.team);
+          if (Game.state) Game.updateRobotList();
+        }
+        return;
+      }
+      // 游戏倒计时期间锁定所有机器人：不移动、不旋转、不射击。
+      if (Game.state && Game.state.openingTime > 0 && !this.disabled) {
+        this.vx = 0;
+        this.vy = 0;
+        this.spinMode = false;
+        return;
+      }
+      this.cooldown -= dt;
+      this.fireBanTimer -= dt;
+      this.burstTimer -= dt;
+      if (this.burstTimer <= 0 && this.burstCount >= this.burstSize) this.burstCount = 0;
+
+      if (this.invincibleTimer > 0) {
+        this.invincibleTimer -= dt;
+        if (this.invincibleTimer <= 0) this.invincible = false;
+      }
+
+      this.heat = Math.max(0, this.heat - this.heatDec * dt);
+      if (this.locked && this.heat <= 0) {
+        this.locked = false;
+        Game.log(`${this.name} 枪管冷却完成`, this.team);
+      }
+
+      if (this.bufferEnergy < this.maxBufferEnergy) {
+        this.bufferEnergy = Math.min(this.maxBufferEnergy, this.bufferEnergy + this.maxBufferEnergy * 0.33 * dt);
+      }
+
+      // 自转模式：机身持续旋转
+      if (this.spinMode) {
+        this.bufferEnergy = Math.max(0, this.bufferEnergy - this.spinPowerCost * dt);
+        if (this.bufferEnergy <= 0) {
+          this.spinMode = false;
+        } else {
+          this.angle += this.spinAngleSpeed * dt;
+        }
+      }
+
+      if (this.isPlayerControlled()) this.playerControl(dt);
+      else if (this.controlHandoffTimer > 0) {
+        // 控制权刚切换时仅保持原有运动状态，不立刻套用新的 AI 目标。
+        this.controlHandoffTimer = Math.max(0, this.controlHandoffTimer - dt);
+      }
+      else if (this.type === 'sentry') this.updateSentryLogic(dt);
+      else this.aiControl(dt);
+
+      // 轮腿机器人无视地形，所有机器人都采用普通平面移动
+      this.jumping = false;
+      this.airZ = 0;
+
+      const speed = this.getEffectiveSpeed();
+      if (this.vx !== 0 || this.vy !== 0) {
+        const v = U.norm({ x: this.vx, y: this.vy });
+        this.x += v.x * speed * dt * 20;
+        this.y += v.y * speed * dt * 20;
+        // 自转时机身继续旋转；非自转时机身才跟随移动方向
+        if (!this.spinMode) this.angle = Math.atan2(v.y, v.x);
+      }
+      this.x = U.clamp(this.x, this.size, LOGIC_W - this.size);
+      this.y = U.clamp(this.y, this.size, LOGIC_H - this.size);
+
+      this.finalizeMovementAndCollisions(dt);
+    }
+
+    finalizeMovementAndCollisions(dt) {
+      // 机器人碰撞（瘫痪机器人仍可被推动）
+      for (const other of Game.state.robots) {
+        if (other === this || other.dead) continue;
+        const d = U.dist(this, other);
+        const minD = this.size + other.size;
+        if (d < minD && d > 0.001) {
+          const nx = (this.x - other.x) / d, ny = (this.y - other.y) / d;
+          const overlap = (minD - d) * 0.5;
+          this.x += nx * overlap; this.y += ny * overlap;
+          other.x -= nx * overlap; other.y -= ny * overlap;
+
+          // Deterministic tangential escape prevents symmetric collisions from freezing units.
+          const tangentSign = this.id < other.id ? 1 : -1;
+          const tvx = -ny * tangentSign, tvy = nx * tangentSign;
+          const thisMoving = Math.hypot(this.vx, this.vy) > 0.05;
+          const otherMoving = Math.hypot(other.vx, other.vy) > 0.05;
+          if (!thisMoving && otherMoving) { this.vx = tvx; this.vy = tvy; }
+          else if (thisMoving && !otherMoving) { other.vx = -tvx; other.vy = -tvy; }
+          else if (!thisMoving && !otherMoving) { this.vx = tvx; this.vy = tvy; }
+        }
+      }
+      this.x = U.clamp(this.x, this.size, LOGIC_W - this.size);
+      this.y = U.clamp(this.y, this.size, LOGIC_H - this.size);
+
+      // 轮腿机器人直接无视挡墙；其他底盘执行墙体推出和速度分量取消
+      if (!this.canIgnoreTerrain()) for (const w of MapData.walls) {
+        const closestX = U.clamp(this.x, w.x, w.x + w.w);
+        const closestY = U.clamp(this.y, w.y, w.y + w.h);
+        const dx = this.x - closestX;
+        const dy = this.y - closestY;
+        const dist = Math.hypot(dx, dy);
+        if (dist < this.size) {
+          let nx, ny, push;
+          if (dist > 0.001) {
+            nx = dx / dist; ny = dy / dist; push = this.size - dist;
+          } else {
+            // 圆心落在墙内时最近点距离为 0，按最近墙边直接推出，避免卡死
+            const left = this.x - w.x, right = w.x + w.w - this.x;
+            const top = this.y - w.y, bottom = w.y + w.h - this.y;
+            const minSide = Math.min(left, right, top, bottom);
+            if (minSide === left) { nx = -1; ny = 0; push = left + this.size; }
+            else if (minSide === right) { nx = 1; ny = 0; push = right + this.size; }
+            else if (minSide === top) { nx = 0; ny = -1; push = top + this.size; }
+            else { nx = 0; ny = 1; push = bottom + this.size; }
+          }
+          this.x += nx * push;
+          this.y += ny * push;
+          const dot = this.vx * nx + this.vy * ny;
+          if (dot < 0) {
+            this.vx -= dot * nx;
+            this.vy -= dot * ny;
+          }
+        }
+      }
+
+      // 补给区回血（瘫痪机器人在补给区内回血更快，达到30%解锁攻击）
+      let inSupply = false;
+      for (const sz of MapData.supplyZones) {
+        if (sz.team === this.team && this.inRect(sz)) {
+          inSupply = true;
+          const healRate = this.disabled ? 0.5 : 0.25;
+          this.hp = Math.min(this.maxHp, this.hp + this.maxHp * healRate * dt);
+          this.heat = Math.max(0, this.heat - this.heatDec * 2 * dt);
+          if (this.disabled && this.hp >= this.maxHp * 0.3) {
+            this.disabled = false;
+            this.locked = false;
+            this.deathTimer = 0;
+            this.repairRelease = true;
+            Game.log(`${this.name} 修复完成，攻击解锁`, this.team);
+            if (Game.state) Game.updateRobotList();
+          }
+        }
+      }
+
+      // 防御性校验：防止任何数值异常扩散
+      if (!Number.isFinite(this.x) || !Number.isFinite(this.y)) {
+        console.warn(`[NaN Guard] ${this.name} position corrupted, resetting to spawn`);
+        const sz = MapData.startZones.find(z => z.team === this.team);
+        this.x = sz.x + sz.w / 2 + U.rand(-8, 8);
+        this.y = sz.y + sz.h / 2 + U.rand(-8, 8);
+        this.vx = 0; this.vy = 0;
+      }
+    }
+
+    isPlayerControlled() { return Game.state.selectedRobot === this && this.type !== 'sentry'; }
+    playerControl(dt) {
+      this.vx = 0; this.vy = 0;
+      if (Input.keys['w']) this.vy -= 1;
+      if (Input.keys['s']) this.vy += 1;
+      if (Input.keys['a']) this.vx -= 1;
+      if (Input.keys['d']) this.vx += 1;
+      if (this.reactionTimer > 0) {
+        this.reactionTimer = Math.max(0, this.reactionTimer - dt);
+        if (this.bufferEnergy > 0 && !this.isPlayerControlled()) this.spinMode = true;
+        if (this.vx === 0 && this.vy === 0) {
+          const away = this.reactionTarget ? U.norm({ x: this.x - this.reactionTarget.x, y: this.y - this.reactionTarget.y }) : { x: -Math.cos(this.angle), y: -Math.sin(this.angle) };
+          const side = { x: -away.y * this.reactionSide, y: away.x * this.reactionSide };
+          const dodge = U.norm({ x: away.x * 0.35 + side.x * 0.65, y: away.y * 0.35 + side.y * 0.65 });
+          this.vx = dodge.x; this.vy = dodge.y;
+        }
+      }
+      if (Input.consume('q')) {
+        if (!this.spinMode && this.bufferEnergy <= 0) {
+          Game.log(`${this.name} 缓冲能量不足，无法开启自转`, this.team);
+        } else {
+          this.spinMode = !this.spinMode;
+        }
+        Game.log(`${this.name} ${this.spinMode ? '开启' : '关闭'}自转模式`, this.team);
+      }
+      // 兼容旧输入：轮腿不再跳跃，空格仅消费按键避免浏览器滚动
+      // 武器瞄准角独立于机身移动和自转，始终跟随鼠标
+      this.aimAngle = U.angleXY(this, Input.mouse.x, Input.mouse.y);
+      // 瘫痪状态下不能攻击
+      if (this.disabled) return;
+      if (this.autoAim) this.autoAimAndFire();
+      // 鼠标左键发射
+      if (Input.consume('mousedown') && !Input.mouse.selecting) {
+        // 玩家恢复冷却、过热、点射和弹药限制，但保留自由抛射（不受射程拦截）
+        // 玩家保留冷却/过热/点射/弹药限制，但可自由抛射，不受武器射程拦截
+        // 玩家可以向任意鼠标位置抛射；不要求该位置附近存在可命中的机器人，也不受武器射程拦截。
+        // 鼠标只提供枪口朝向；不把鼠标位置当作弹药的锁定目标或终点。
+        // 只在这一刻采样鼠标对应的炮口朝向；弹丸生成后与鼠标坐标完全脱钩。
+        const launchAngle = this.aimAngle;
+        this.fireAt(null, null, true, launchAngle);
+      }
+    }
+
+    startJump() {
+      // 轮腿底盘改为持续无视地形，保留空方法兼容旧调用。
+    }
+
+    aiControl(dt) {
+      const sz = MapData.supplyZones.find(z => z.team === this.team);
+      const enemySupply = MapData.supplyZones.find(z => z.team !== this.team);
+      const cz = MapData.controlZone;
+      const controlTarget = { x: cz.x + cz.w / 2, y: cz.y + cz.h / 2 };
+      const supplyTarget = { x: sz.x + sz.w / 2, y: sz.y + sz.h / 2 };
+      const enemySupplyTarget = { x: enemySupply.x + enemySupply.w / 2, y: enemySupply.y + enemySupply.h / 2 };
+
+      if (this.disabled) {
+        this.spinMode = false;
+        this.moveToTarget(supplyTarget.x, supplyTarget.y, dt);
+        return;
+      }
+
+      // 受击后的短时应激动作：小范围侧向闪避并开启自转，避免原地挨打。
+      if (this.reactionTimer > 0) {
+        this.reactionTimer = Math.max(0, this.reactionTimer - dt);
+        this.spinMode = this.bufferEnergy > 0;
+        const away = this.reactionTarget ? U.norm({ x: this.x - this.reactionTarget.x, y: this.y - this.reactionTarget.y }) : { x: -Math.cos(this.angle), y: -Math.sin(this.angle) };
+        const side = { x: -away.y * this.reactionSide, y: away.x * this.reactionSide };
+        const dodge = U.norm({ x: away.x * 0.35 + side.x * 0.65, y: away.y * 0.35 + side.y * 0.65 });
+        this.vx = dodge.x; this.vy = dodge.y;
+        if (this.reactionTimer <= 0) this.reactionTarget = null;
+        return;
+      }
+
+      this.aiTimer -= dt;
+      this.aiModeTimer -= dt;
+      if (this.aiModeTimer <= 0) {
+        this.aiMode = ['control','flank','hunter','pressure'][Math.floor(Math.random()*4)];
+        this.aiModeTimer = U.rand(6, 14);
+      }
+      if (this.aiTimer <= 0) {
+        this.aiTimer = U.rand(0.3, 0.7);
+        const enemies = Game.state.robots.filter(r => r.team !== this.team && !r.dead && !r.disabled);
+        this.aiTarget = enemies.length ? enemies.reduce((best, e) => !best || U.dist(this, e) < best.d ? { e, d: U.dist(this, e) } : best, null).e : null;
+      }
+
+      const criticalHp = this.hp / this.maxHp < 0.25;
+      const teamGold = this.team === 'red' ? Game.state.redGold : Game.state.blueGold;
+      const canBuyAmmo = this.type === 'sentry' || teamGold >= this.ammoCost;
+      // 提前补弹，避免步兵/哨兵在低弹量时长期停火。
+      // Red-side ammo is manual-only. Do not let an empty magazine park an AI
+      // unit in supply forever; blue AI may still retreat and auto-purchase.
+      const criticalAmmo = this.team === 'blue' && Number.isFinite(this.ammoCapacity) && this.ammo < this.ammoCapacity * 0.2 && canBuyAmmo;
+      const inSupply = this.inRect(sz);
+      if (!inSupply) this.repairRelease = false;
+      const needSupply = criticalHp || criticalAmmo || (inSupply && this.hp < this.maxHp * 0.8 && !this.repairRelease);
+      const inControl = this.inRect(cz);
+      const situation = Game.getTacticalSituation(this.team);
+      const pressureEnemy = this.aiMode === 'pressure' || (!situation.disadvantage && Game.shouldPressureEnemySupply(this));
+      const controlSpin = inControl && !needSupply && !pressureEnemy && this.bufferEnergy > 0;
+
+      // 优先级 1：受伤/缺弹返回己方补给区
+      if (needSupply && !inSupply) {
+        this.spinMode = false;
+        this.moveToTarget(supplyTarget.x, supplyTarget.y, dt);
+      } else if (needSupply) {
+        this.vx = 0; this.vy = 0;
+        this.spinMode = false;
+      // 优先级 2：先占领并守住控制区；形成大优势且已控区后才压制敌方补给区
+      } else if (pressureEnemy) {
+        this.moveToTarget(enemySupplyTarget.x, enemySupplyTarget.y, dt);
+      } else if (this.aiMode === 'hunter' && this.aiTarget) {
+        this.moveToTarget(this.aiTarget.x, this.aiTarget.y, dt);
+      } else if (this.aiMode === 'flank' && !inControl) {
+        this.moveToTarget(controlTarget.x, controlTarget.y + (this.team === 'red' ? 22 : -22), dt);
+      } else if (!inControl) {
+        this.spinMode = false;
+        this.moveToTarget(controlTarget.x, controlTarget.y, dt);
+      } else {
+        this.vx = 0; this.vy = 0;
+      }
+
+      // 敌方交火是第二优先级，不改变控制区/补给区的移动目标
+      if (this.aiTarget && !this.aiTarget.dead && !this.aiTarget.disabled) {
+        const d = U.dist(this, this.aiTarget);
+        this.aimAngle = U.angle(this, this.aiTarget);
+        const defensiveSpin = controlSpin || (!needSupply && this.bufferEnergy > 0 && ((inControl && d <= 25) || (d <= 18 && this.hp / this.maxHp < 0.4)));
+        this.spinMode = defensiveSpin;
+        if (this.autoFire && (!this.spinMode || this.bufferEnergy > 0) && d <= this.range && this.ammo > 0 && !criticalHp && !criticalAmmo) {
+          const aimPoint = this.autoAim ? this.getPredictedAimPoint(this.aiTarget) : { x: this.aiTarget.x, y: this.aiTarget.y };
+          if (aimPoint) this.fireAt(aimPoint.x, aimPoint.y, false);
+        }
+      } else {
+        this.spinMode = controlSpin;
+      }
+    }
+
+    updateSentryLogic(dt) {
+      if (this.type !== 'sentry') return;
+      // 瘫痪状态：强制返回补给区修复
+      if (this.disabled) {
+        const sz = MapData.supplyZones.find(z => z.team === this.team);
+        this.moveToTarget(sz.x + sz.w / 2, sz.y + sz.h / 2, dt);
+        return;
+      }
+      const sz = MapData.supplyZones.find(z => z.team === this.team);
+      const enemySupply = MapData.supplyZones.find(z => z.team !== this.team);
+      const cz = MapData.controlZone;
+      const controlTarget = { x: cz.x + cz.w / 2, y: cz.y + cz.h / 2 };
+      const supplyTarget = { x: sz.x + sz.w / 2, y: sz.y + sz.h / 2 };
+      const enemySupplyTarget = { x: enemySupply.x + enemySupply.w / 2, y: enemySupply.y + enemySupply.h / 2 };
+      const criticalHp = this.hp / this.maxHp < 0.25;
+      const criticalAmmo = Number.isFinite(this.ammoCapacity) && this.ammo < this.ammoCapacity * 0.1;
+      const inSupply = this.inRect(sz);
+      if (!inSupply) this.repairRelease = false;
+      const inControl = this.inRect(cz);
+      const needSupply = criticalHp || criticalAmmo || (inSupply && this.hp < this.maxHp * 0.8 && !this.repairRelease);
+      const controlSpin = inControl && !needSupply && this.bufferEnergy > 0;
+
+      // 预设仍可提供巡逻/射击逻辑；需要补给时先完全服从撤退优先级
+      // An active red preset is an explicit command and owns movement/spin.
+      // Keep the critical-health retreat as a hard safety override.
+      if (this.team === 'red' && this.sentryPresetCode) {
+        if (criticalHp) {
+          this.spinMode = false;
+          if (inSupply) { this.vx = 0; this.vy = 0; }
+          else this.moveToTarget(supplyTarget.x, supplyTarget.y, dt);
+          return;
+        }
+        this.vx = 0;
+        this.vy = 0;
+        SentryAI.runPreset(this, this.sentryPresetCode, dt);
+        return;
+      }
+      // Blue sentries keep the built-in strategy; their preset is only an
+      // optional behavior hint and may be superseded by retreat/pressure rules.
+      if (this.team !== 'red' && this.sentryPresetCode && !needSupply) {
+        SentryAI.runPreset(this, this.sentryPresetCode, dt);
+      }
+      if (needSupply && !inSupply) {
+        this.spinMode = false;
+        this.moveToTarget(supplyTarget.x, supplyTarget.y, dt);
+      } else if (needSupply) {
+        this.vx = 0; this.vy = 0; this.spinMode = false;
+      } else if (!Game.getTacticalSituation(this.team).disadvantage && Game.shouldPressureEnemySupply(this)) {
+        this.moveToTarget(enemySupplyTarget.x, enemySupplyTarget.y, dt);
+      } else if (!inControl) {
+        this.spinMode = false;
+        this.moveToTarget(controlTarget.x, controlTarget.y, dt);
+      } else {
+        this.vx = 0; this.vy = 0;
+      }
+
+      const enemies = Game.state.robots.filter(r => r.team !== this.team && !r.dead && !r.disabled);
+      const target = enemies.length ? enemies.reduce((best, e) => !best || U.dist(this, e) < best.d ? { e, d: U.dist(this, e) } : best, null) : null;
+      if (target) {
+        this.aimAngle = U.angle(this, target.e);
+        const defensiveSpin = controlSpin || (!needSupply && this.bufferEnergy > 0 && ((inControl && target.d <= 30) || (target.d <= 18 && this.hp / this.maxHp < 0.4)));
+        this.spinMode = defensiveSpin;
+        if ((!this.spinMode || this.bufferEnergy > 0) && target.d <= this.range && this.ammo > 0 && !criticalHp && !criticalAmmo) {
+          const aimPoint = this.autoAim ? this.getPredictedAimPoint(target.e) : { x: target.e.x, y: target.e.y };
+          if (aimPoint) this.fireAt(aimPoint.x, aimPoint.y, false);
+        }
+      } else {
+        this.spinMode = controlSpin;
+      }
+    }
+
+    clearNavigation() {
+      this.navPath = null;
+      this.navPathIndex = 0;
+      this.navTargetKey = '';
+      this.navStuckTimer = 0;
+      this.navReplanTimer = 0;
+      this.navLastX = this.x;
+      this.navLastY = this.y;
+    }
+
+    navigationTargetKey(tx, ty) {
+      return `${Math.round(tx / 8)},${Math.round(ty / 8)}`;
+    }
+
+    planNavigation(tx, ty, preferredBias = this.routeBias) {
+      const targetKey = this.navigationTargetKey(tx, ty);
+      const clearance = this.size + 3;
+      const biases = [preferredBias, -preferredBias, 0];
+      const candidates = [];
+      for (const bias of biases) {
+        const raw = U.gridPath(this.x, this.y, tx, ty, clearance, bias);
+        if (!raw || raw.length < 2) continue;
+        const points = [{ x: this.x, y: this.y }, ...raw.slice(1)];
+        const waypoints = [];
+        let anchor = points[0];
+        let cursor = 1;
+        const segmentRadius = this.size + 1.5;
+        while (cursor < points.length) {
+          let farthest = cursor;
+          for (let j = points.length - 1; j >= cursor; j--) {
+            if (!U.lineHitsWall(anchor.x, anchor.y, points[j].x, points[j].y, segmentRadius)) {
+              farthest = j;
+              break;
+            }
+          }
+          waypoints.push(points[farthest]);
+          anchor = points[farthest];
+          cursor = farthest + 1;
+        }
+        if (!waypoints.length) continue;
+        let length = 0;
+        let prev = { x: this.x, y: this.y };
+        for (const p of waypoints) {
+          length += U.distXY(prev, p.x, p.y);
+          prev = p;
+        }
+        candidates.push({ points: waypoints, length: length + (bias === preferredBias ? 0 : 2), bias });
+      }
+      if (!candidates.length) return false;
+      candidates.sort((a, b) => a.length - b.length);
+      const chosen = candidates[0];
+      this.navPath = chosen.points;
+      this.navPathIndex = 0;
+      this.navTargetKey = targetKey;
+      this.navReplanTimer = 0.35;
+      this.navStuckTimer = 0;
+      this.navLastX = this.x;
+      this.navLastY = this.y;
+      if (chosen.bias) this.routeBias = chosen.bias;
+      return true;
+    }
+
+    planWallTopDetour(tx, ty) {
+      // 地图右侧竖墙贴到底边，底部没有实际通道；卡在其下沿时必须从顶部绕行。
+      const margin = this.size + 8;
+      const targetKey = this.navigationTargetKey(tx, ty);
+      if (this.navForcedTopDetour && this.navTargetKey === targetKey && this.navPath) return true;
+      const blockingWall = MapData.walls.find(w =>
+        this.x < w.x && tx > w.x + w.w &&
+        this.y > w.y + w.h - margin &&
+        w.y + w.h >= LOGIC_H - margin
+      );
+      if (!blockingWall) return false;
+      const topY = Math.max(margin, blockingWall.y - margin);
+      this.navPath = [
+        { x: blockingWall.x - margin, y: topY },
+        { x: blockingWall.x + blockingWall.w + margin, y: topY },
+        { x: tx, y: ty }
+      ];
+      this.navPathIndex = 0;
+      this.navTargetKey = targetKey;
+      this.navForcedTopDetour = true;
+      this.navReplanTimer = 1.5;
+      this.navStuckTimer = 0;
+      this.navEscapeTimer = 0;
+      return true;
+    }
+
+    moveToTarget(tx, ty, dt) {
+      const d = U.distXY(this, tx, ty);
+      if (d < 4) { this.vx = 0; this.vy = 0; this.clearNavigation(); return; }
+      if (this.canIgnoreTerrain()) {
+        this.clearNavigation();
+        const dir = U.norm({ x: tx - this.x, y: ty - this.y });
+        this.vx = dir.x; this.vy = dir.y;
+        if (!this.spinMode) this.angle = Math.atan2(dir.y, dir.x);
+        return;
+      }
+
+      // 位于右侧封闭墙底的左侧、目标却在墙右侧时，不等待“卡住”判定，直接上绕。
+      const originalTarget = { x: tx, y: ty };
+      if (this.planWallTopDetour(tx, ty) && this.navPath && this.navPath[this.navPathIndex]) {
+        tx = this.navPath[this.navPathIndex].x;
+        ty = this.navPath[this.navPathIndex].y;
+      }
+
+      // 卡在墙角/控制区边缘时，先执行短暂的垂直脱离动作，避免沿同一法线反复顶墙。
+      if (this.navEscapeTimer > 0) {
+        this.navEscapeTimer = Math.max(0, this.navEscapeTimer - dt);
+        const toTarget = U.norm({ x: tx - this.x, y: ty - this.y });
+        const side = this.navEscapeSign || 1;
+        this.vx = -toTarget.y * side;
+        this.vy = toTarget.x * side;
+        if (!this.spinMode) this.angle = Math.atan2(this.vy, this.vx);
+        return;
+      }
+
+      const directClear = !U.lineHitsWall(this.x, this.y, tx, ty, this.size + 1.5);
+      if (directClear) {
+        this.clearNavigation();
+      } else {
+        const targetKey = this.navigationTargetKey(originalTarget.x, originalTarget.y);
+        this.navReplanTimer = Math.max(0, this.navReplanTimer - dt);
+        const moved = U.distXY(this, this.navLastX, this.navLastY);
+        if (moved < 0.45) this.navStuckTimer += dt;
+        else {
+          this.navStuckTimer = 0;
+          this.navLastX = this.x;
+          this.navLastY = this.y;
+        }
+        if (this.navStuckTimer > 0.55 && this.navReplanTimer <= 0) {
+          this.routeBias = -(this.routeBias || 1);
+          this.navEscapeSign = -(this.navEscapeSign || 1);
+          const hasForcedDetour = this.planWallTopDetour(tx, ty);
+          if (!hasForcedDetour) {
+            this.navEscapeTimer = 0.9;
+            this.navPath = null;
+            this.navReplanTimer = 0;
+          }
+          this.navStuckTimer = 0;
+        }
+        const next = this.navPath && this.navPath[this.navPathIndex];
+        const needsPlan = !this.navPath || this.navTargetKey !== targetKey || this.navPathIndex >= this.navPath.length;
+        if (needsPlan || (this.navReplanTimer <= 0 && next &&
+          U.lineHitsWall(this.x, this.y, next.x, next.y, this.size + 1.5))) {
+          this.navForcedTopDetour = false;
+          this.planNavigation(originalTarget.x, originalTarget.y, this.routeBias);
+        }
+        if (this.navPath && this.navPath.length) {
+          while (this.navPathIndex < this.navPath.length &&
+            U.distXY(this, this.navPath[this.navPathIndex].x, this.navPath[this.navPathIndex].y) < Math.max(3.5, this.size * 0.7)) {
+            this.navPathIndex++;
+          }
+          if (this.navPathIndex >= this.navPath.length) {
+            this.vx = 0; this.vy = 0; return;
+          }
+          tx = this.navPath[this.navPathIndex].x;
+          ty = this.navPath[this.navPathIndex].y;
+        }
+      }
+      const dir = U.norm({ x: tx - this.x, y: ty - this.y });
+      this.vx = dir.x; this.vy = dir.y;
+      if (!this.spinMode) this.angle = Math.atan2(dir.y, dir.x);
+    }
+
+    canIgnoreTerrain() {
+      return this.ignoresTerrain || String(this.mobility).toLowerCase() === 'wheel-leg';
+    }
+
+    isStandingOnWall() {
+      return this.canIgnoreTerrain() && MapData.walls.some(w =>
+        this.x >= w.x && this.x <= w.x + w.w &&
+        this.y >= w.y && this.y <= w.y + w.h
+      );
+    }
+
+    fireAt(tx, ty, ignoreRange = false, launchAngle = null) {
+      // 自转能量耗尽后停止自动/预设弹幕；玩家手动开火（ignoreRange=true）不受此条件影响。
+      if (this.spinMode && this.bufferEnergy <= 0 && !ignoreRange) return;
+      if (this.dead || this.disabled || this.locked || this.fireBanTimer > 0 || this.cooldown > 0 || this.ammo <= 0) return;
+      const d = launchAngle == null ? U.distXY(this, tx, ty) : 0;
+      if (!ignoreRange && d > this.range) return;
+
+      // 爆发控制
+      if (this.burstCount >= this.burstSize) {
+        if (this.burstTimer <= 0) this.burstTimer = this.burstCooldown;
+        return;
+      }
+
+      this.cooldown = 1 / this.getEffectiveROF();
+      this.heat += this.heatInc;
+      if (this.type !== 'sentry') this.ammo -= 1;
+      this.burstCount += 1;
+
+      if (this.heat >= this.heatLimit) {
+        this.locked = true;
+        Game.log(`${this.name} 枪管过热！开火锁止`, this.team);
+      }
+
+      const angle = launchAngle == null ? U.angleXY(this, tx, ty) : launchAngle;
+      this.aimAngle = angle;
+      // 唯一的散射只发生在炮口生成瞬间，幅度很小；飞行期间方向不再改变。
+      const unitAccuracy = (this.type === 'infantry' || this.type === 'sentry') ? 0.62 : 1.0;
+      const stabilityScatter = MUZZLE_SCATTER * unitAccuracy * (1 - this.scatterReduction);
+      const scatter = this.autoAim ? stabilityScatter * (1 - this.aimAssist * 0.85) : stabilityScatter;
+      const finalAngle = angle + U.rand(-scatter, scatter);
+      // 自瞄只在发射瞬间修正瞄准方向；子弹生成后不再绑定目标或追踪敌人
+      Game.state.bullets.push(BulletSys.fire(this, finalAngle));
+    }
+
+    getAutoAimTarget(fallbackX = null, fallbackY = null) {
+      const enemies = Game.state.robots.filter(r => r.team !== this.team && !r.dead && !r.disabled);
+      if (!enemies.length) return null;
+      const inRange = enemies.filter(r => U.dist(this, r) <= this.range);
+      if (!inRange.length) return null;
+      return inRange.reduce((best, r) => !best || U.dist(this, r) < best.d ? { e: r, d: U.dist(this, r) } : best, null).e;
+    }
+
+    getPredictedAimPoint(target) {
+      if (!target) return null;
+      const shotSpeed = BULLET_SPEED;
+      const distance = U.dist(this, target);
+      if (!Number.isFinite(distance) || distance > this.range) return null;
+      const targetSpeed = typeof target.getEffectiveSpeed === 'function' ? target.getEffectiveSpeed() * 20 : 0;
+      const tvx = (Number(target.vx) || 0) * targetSpeed;
+      const tvy = (Number(target.vy) || 0) * targetSpeed;
+      let leadTime = Math.min(1.0, distance / shotSpeed);
+      // 迭代求解拦截点：根据目标运动速度预估子弹抵达时的位置。
+      for (let i = 0; i < 3; i++) {
+        const px = target.x + tvx * leadTime;
+        const py = target.y + tvy * leadTime;
+        leadTime = U.clamp(Math.hypot(px - this.x, py - this.y) / shotSpeed, 0, 1.0);
+      }
+      return { x: target.x + tvx * leadTime, y: target.y + tvy * leadTime };
+    }
+
+    autoAimAndFire() {
+      if (!this.autoAim || this.dead || this.disabled) return;
+      const target = this.getAutoAimTarget();
+      const aimPoint = this.getPredictedAimPoint(target);
+      // 没有射程内目标时不自动开火，避免浪费弹药和误伤墙体。
+      if (!aimPoint) return;
+      this.aimAngle = U.angleXY(this, aimPoint.x, aimPoint.y);
+      // 使用预测点计算发射方向；弹丸生成后保持直线，不再追踪目标。
+      this.fireAt(aimPoint.x, aimPoint.y, false);
+    }
+
+    inRect(rect) {
+      return this.x > rect.x && this.x < rect.x + rect.w && this.y > rect.y && this.y < rect.y + rect.h;
+    }
+
+    getArmorPlates() {
+      // 前、右、后、左四块极窄装甲板
+      const r = this.size * 0.95 * this.hitScale;
+      const halfLen = this.size * 0.55 * this.hitScale;
+      const thickness = this.size * 0.22 * this.hitScale;
+      const relAngles = [0, Math.PI / 2, Math.PI, -Math.PI / 2];
+      return relAngles.map((rel, i) => {
+        const a = this.angle + rel;
+        const cx = this.x + Math.cos(a) * r;
+        const cy = this.y + Math.sin(a) * r;
+        const dx = -Math.sin(a) * halfLen;
+        const dy = Math.cos(a) * halfLen;
+        return {
+          name: ['前', '右', '后', '左'][i],
+          x1: cx - dx, y1: cy - dy,
+          x2: cx + dx, y2: cy + dy,
+          nx: Math.cos(a), ny: Math.sin(a),
+          thickness
+        };
+      });
+    }
+
+    takeDamage(dmg, attacker) {
+      if (this.dead || this.disabled || this.invincible) return;
+      const integerDamage = Math.max(0, Math.round(Number(dmg) || 0));
+      const hpBefore = Math.max(0, Math.round(this.hp));
+      const appliedDamage = Math.min(hpBefore, integerDamage);
+      this.hp = hpBefore - appliedDamage;
+      if (attacker) attacker.totalDamageDealt = Math.round(attacker.totalDamageDealt + appliedDamage);
+      if (appliedDamage > 0 && this.type !== 'sentry' && !this.dead && !this.disabled) {
+        this.reactionTimer = Math.max(this.reactionTimer || 0, U.rand(0.45, 0.9));
+        this.reactionTarget = attacker && attacker.team !== this.team ? attacker : null;
+        this.reactionSide = Math.random() < 0.5 ? -1 : 1;
+        if (this.bufferEnergy > 0 && !this.isPlayerControlled()) this.spinMode = true;
+      }
+      if (this.hp <= 0) {
+        this.hp = 0; this.dead = true; this.deathTimer = 5;
+        Game.onKill(this, attacker);
+      }
+    }
+
+    get name() { return `${U.teamName(this.team)}${ROBOT_BASE[this.type].name}${this.index + 1}`; }
+  }
+
+  // ============ 哨兵预设程序系统 ============
+  // 玩家可在后台编辑每套预设的 JavaScript 逻辑体
+  const SENTRY_PRESETS = [
+    {
+      name: '前线自转防御',
+      desc: '巡逻前线，检测到 1m 内敌方单位开启自转并攻击',
+      code: `// 前线巡逻点（红方视角）
+const cz = MapData.controlZone;
+const cx = cz.x + cz.w / 2, cy = cz.y + cz.h / 2;
+if (!inRect(cz)) {
+  moveTo(cx, cy);
+  setSpinMode(false);
+} else {
+  patrol([
+    {x: cx - 12, y: cy}, {x: cx + 12, y: cy},
+    {x: cx, y: cy - 10}, {x: cx, y: cy + 10}
+  ], 0.35);
+  setSpinMode(true);
+}
+const enemy = nearestEnemy();
+if (enemy && distTo(enemy.x, enemy.y) <= sentry.range) fireAt(enemy.x, enemy.y);`
+    },
+    {
+      name: '补给区防守',
+      desc: '围绕己方补给区巡逻，低血量/弹药时退回补给区',
+      code: `const sz = teamSupply();
+const sx = sz.x + sz.w / 2, sy = sz.y + sz.h / 2;
+if (!inRect(sz)) {
+  moveTo(sx, sy);
+} else {
+  stop();
+}
+setSpinMode(false);
+const enemy = nearestEnemy();
+if (enemy && inRect(sz) && distTo(enemy.x, enemy.y) <= sentry.range) fireAt(enemy.x, enemy.y);`
+    },
+    {
+      name: '控制区压制',
+      desc: '前往中心控制区巡逻驻守，压制敌方并争夺占领',
+      code: `const cz = MapData.controlZone;
+const enemySupply = MapData.supplyZones.find(z => z.team !== sentry.team);
+const cx = cz.x + cz.w / 2, cy = cz.y + cz.h / 2;
+const ex = enemySupply.x + enemySupply.w / 2, ey = enemySupply.y + enemySupply.h / 2;
+const points = [
+  {x: cx, y: cy},
+  {x: cx + (ex - cx) * 0.35, y: cy + (ey - cy) * 0.35},
+  {x: cx + (ex - cx) * 0.7, y: cy + (ey - cy) * 0.7},
+  {x: ex, y: ey}
+];
+const lowHp = sentry.hp / sentry.maxHp < 0.35;
+const sz = teamSupply();
+if (lowHp) {
+  moveTo(sz.x + sz.w / 2, sz.y + sz.h / 2);
+  setSpinMode(false);
+} else {
+  patrol(points, 0.5);
+  const enemy = nearestEnemy();
+  if (enemy && distTo(enemy.x, enemy.y) <= sentry.range) {
+    setSpinMode(true);
+    fireAt(enemy.x, enemy.y);
+  } else {
+    setSpinMode(false);
+  }
+}`
+    }
+  ];
+
+  const SentryAI = {
+    compile(code) {
+      try {
+        return new Function('ctx', `
+          const { sentry, dt, Game, U, MapData, nearestEnemy, allEnemies, distTo, moveTo, stop, fireAt, fireAtNearest, setSpinMode, inRect, teamSupply, patrol } = ctx;
+          ${code}
+        `);
+      } catch (e) {
+        console.error('哨兵预设编译失败', e);
+        return null;
+      }
+    },
+    getContext(sentry, dt) {
+      const team = sentry.team;
+      function moveSentry(x, y) {
+        // 预设巡逻与常规 AI 共用同一套路线缓存/换路逻辑
+        sentry.moveToTarget(x, y, dt);
+      }
+      return {
+        sentry, dt, Game, U, MapData,
+        nearestEnemy() {
+          const enemies = Game.state.robots.filter(r => r.team !== team && !r.dead && !r.disabled);
+          return enemies.length ? enemies.reduce((best, e) => {
+            const d = U.dist(sentry, e);
+            return (!best || d < best.d) ? { e, d } : best;
+          }, null).e : null;
+        },
+        allEnemies() { return Game.state.robots.filter(r => r.team !== team && !r.dead && !r.disabled); },
+        distTo(x, y) { return U.distXY(sentry, x, y); },
+        moveTo(x, y) { moveSentry(x, y); },
+        stop() { sentry.vx = 0; sentry.vy = 0; },
+        fireAt(x, y) {
+          if (!Number.isFinite(x) || !Number.isFinite(y)) return;
+          const target = Game.state.robots
+            .filter(r => r.team !== team && !r.dead && !r.disabled)
+            .reduce((best, e) => {
+              const d = Math.hypot(e.x - x, e.y - y);
+              return (!best || d < best.d) ? { e, d } : best;
+            }, null);
+          const aim = target && target.d < 8 && U.dist(sentry, target.e) <= sentry.range
+            ? sentry.getPredictedAimPoint(target.e) : { x, y };
+          if (aim && U.distXY(sentry, aim.x, aim.y) <= sentry.range) {
+            sentry.aimAngle = U.angleXY(sentry, aim.x, aim.y);
+            sentry.fireAt(aim.x, aim.y, false);
+          }
+        },
+        fireAtNearest() {
+          const e = this.nearestEnemy();
+          if (e) {
+            const aim = sentry.getPredictedAimPoint(e);
+            if (aim) { sentry.aimAngle = U.angleXY(sentry, aim.x, aim.y); sentry.fireAt(aim.x, aim.y, false); }
+          }
+        },
+        setSpinMode(v) { sentry.spinMode = !!v && sentry.bufferEnergy > 0; },
+        inRect(rect) { return sentry.inRect(rect); },
+        teamSupply() { return MapData.supplyZones.find(z => z.team === team); },
+        patrol(points, waitDuration) {
+          if (!sentry._patrolIndex) { sentry._patrolIndex = 0; sentry._patrolWait = 0; }
+          const idx = sentry._patrolIndex % points.length;
+          const pt = points[idx];
+          if (sentry._patrolWait > 0) {
+            sentry._patrolWait -= dt;
+            sentry.vx = 0; sentry.vy = 0;
+            if (sentry._patrolWait <= 0) { sentry._patrolIndex = (idx + 1) % points.length; sentry._patrolWait = 0; }
+            return;
+          }
+          const d = U.distXY(sentry, pt.x, pt.y);
+          if (d < 4) {
+            sentry._patrolWait = waitDuration || 1;
+            sentry.vx = 0; sentry.vy = 0;
+          } else {
+            moveSentry(pt.x, pt.y);
+          }
+        }
+      };
+    },
+    runPreset(sentry, code, dt) {
+      if (!code) return;
+      if (sentry._presetCode !== code) {
+        sentry._presetFn = this.compile(code);
+        sentry._presetCode = code;
+        sentry._patrolIndex = 0;
+        sentry._patrolWait = 0;
+        sentry.clearNavigation();
+      }
+      if (sentry._presetFn) {
+        try {
+          sentry._presetFn(this.getContext(sentry, dt));
+        } catch (e) {
+          console.error('哨兵预设执行失败', e);
+        }
+      }
+    },
+    autoAimAndFire(sentry) {
+      if (sentry.disabled) return;
+      const enemies = Game.state.robots.filter(r => r.team !== sentry.team && !r.dead && !r.disabled);
+      if (enemies.length === 0) return;
+      const target = enemies.reduce((best, e) => {
+        const d = U.dist(sentry, e);
+        return (!best || d < best.d) ? { e, d } : best;
+      }, null);
+      if (target && target.d <= sentry.range && sentry.ammo > 0) {
+        sentry.aimAngle = U.angle(sentry, target.e);
+        sentry.fireAt(target.e.x, target.e.y);
+      }
+    }
+  };
+
+  // ============ 游戏主逻辑 ============
+  const Game = {
+    state: null,
+    canvas: null,
+    ctx: null,
+    lastTime: 0,
+    particles: [],
+
+    init() {
+      document.getElementById('startBattleBtn').onclick = () => this.startBattle();
+      Assembly.init();
+    },
+
+    startBattle() {
+      if (!Assembly.validateAll()) return;
+      const builds = Assembly.getAllBuilds();
+      const blueBuilds = { hero: randomAIBuild('hero'), infantry: randomAIBuild('infantry'), sentry: randomAIBuild('sentry') };
+      document.getElementById('assemblyScreen').style.display = 'none';
+      document.getElementById('battleScreen').style.display = 'block';
+      document.getElementById('settlementModal').style.display = 'none';
+
+      if (this.loopId) cancelAnimationFrame(this.loopId);
+
+      this.canvas = document.getElementById('gameCanvas');
+      this.ctx = this.canvas.getContext('2d');
+      this.canvas.width = LOGIC_W * SCALE;
+      this.canvas.height = LOGIC_H * SCALE;
+      Input.init();
+      this.bindUI();
+
+      const redHero = new Robot('hero', 'red', 0, 20, 25, builds.hero);
+      const redInf = new Robot('infantry', 'red', 1, 30, 35, builds.infantry);
+      const redSentry = new Robot('sentry', 'red', 2, MapData.sentrySpawn.red.x, MapData.sentrySpawn.red.y, builds.sentry);
+      const blueHero = new Robot('hero', 'blue', 0, 300, 155, blueBuilds.hero);
+      const blueInf = new Robot('infantry', 'blue', 1, 290, 145, blueBuilds.infantry);
+      const blueSentry = new Robot('sentry', 'blue', 2, MapData.sentrySpawn.blue.x, MapData.sentrySpawn.blue.y, blueBuilds.sentry);
+      // 开局默认操控红方英雄或步兵中的一辆，不会默认选中哨兵。
+      const defaultControlled = Math.random() < 0.5 ? redHero : redInf;
+
+      this.state = {
+        time: MATCH_TIME, elapsedTime: 0, openingTime: OPENING_SUPPLY_TIME,
+        redVP: 200, blueVP: 200,
+        redGold: START_GOLD, blueGold: START_GOLD,
+        robots: [redHero, redInf, redSentry, blueHero, blueInf, blueSentry],
+        bullets: [], selectedRobot: defaultControlled,
+        controlOwner: null, controlProgress: 0, over: false, winner: null,
+        incomeMinutes: 0
+      };
+      this.particles = [];
+      this.log('战斗开始！红方（玩家） VS 蓝方（AI）', 'info');
+      this.log('开局10秒为准备时间，英雄和步兵可在己方补给区按R购买弹药', 'info');
+      this.updateRobotList();
+      this.lastTime = performance.now();
+      requestAnimationFrame(t => this.loop(t));
+    },
+
+    returnToAssembly() {
+      if (this.loopId) cancelAnimationFrame(this.loopId);
+      this.loopId = null;
+      this.state = null;
+      document.getElementById('settlementModal').style.display = 'none';
+      document.getElementById('battleScreen').style.display = 'none';
+      document.getElementById('assemblyScreen').style.display = 'flex';
+      Assembly.init();
+    },
+
+    continueBattle() {
+      document.getElementById('settlementModal').style.display = 'none';
+      this.state.over = false;
+      this.state.time = MATCH_TIME;
+      this.state.elapsedTime = 0;
+      this.state.openingTime = OPENING_SUPPLY_TIME;
+      this.state.redVP = 200;
+      this.state.blueVP = 200;
+      this.state.redGold = START_GOLD;
+      this.state.blueGold = START_GOLD;
+      this.state.incomeMinutes = 0;
+      this.state.bullets = [];
+      this.state.controlOwner = null;
+      this.state.controlProgress = 0;
+      this.state.winner = null;
+      // 重置机器人为初始状态
+      const builds = Assembly.getAllBuilds();
+      const blueBuilds = { hero: randomAIBuild('hero'), infantry: randomAIBuild('infantry'), sentry: randomAIBuild('sentry') };
+      const pos = [
+        { type: 'hero', team: 'red', x: 20, y: 25 },
+        { type: 'infantry', team: 'red', x: 30, y: 35 },
+        { type: 'sentry', team: 'red', x: MapData.sentrySpawn.red.x, y: MapData.sentrySpawn.red.y },
+        { type: 'hero', team: 'blue', x: 300, y: 155 },
+        { type: 'infantry', team: 'blue', x: 290, y: 145 },
+        { type: 'sentry', team: 'blue', x: MapData.sentrySpawn.blue.x, y: MapData.sentrySpawn.blue.y }
+      ];
+      this.state.robots = pos.map((p, i) => new Robot(p.type, p.team, i % 3, p.x, p.y, p.team === 'blue' ? blueBuilds[p.type] : builds[p.type]));
+      // 新一局同样随机默认操控红方英雄或步兵。
+      this.state.selectedRobot = this.state.robots.find(r => r.team === 'red' && r.type === (Math.random() < 0.5 ? 'hero' : 'infantry'))
+        || this.state.robots.find(r => r.team === 'red' && r.type === 'hero');
+      this.log('新一轮战斗开始！', 'info');
+      this.updateRobotList();
+    },
+
+    bindUI() {
+      const list = document.getElementById('robotList');
+      if (list && !list.dataset.bound) {
+        list.dataset.bound = '1';
+        const selectFromList = e => {
+          const row = e.target.closest('.robot-row');
+          if (!row || !this.state) return;
+          const robot = this.state.robots.find(r => r.id === row.dataset.robotId);
+          // 瘫痪机器人仍可选中，以便玩家手动操控其回到己方补给区。
+          if (robot && !robot.dead) this.selectRobot(robot);
+        };
+        // 列表每帧会刷新，使用 mousedown 可避免按下后 DOM 重绘导致 click 丢失
+        list.addEventListener('mousedown', selectFromList);
+      }
+    },
+
+    selectRobot(robot) {
+      if (!this.state || !robot || robot.team !== 'red' || robot.dead) return;
+      this.state.selectedRobot = robot;
+      this.updateRobotList();
+      this.updateDetailPanel();
+      this.log(`选中 ${robot.name}`, 'info');
+    },
+
+    switchControlledRobot() {
+      if (!this.state) return;
+      const controllable = this.state.robots.filter(r => r.team === 'red' && (r.type === 'hero' || r.type === 'infantry') && !r.dead && !r.disabled);
+      if (controllable.length < 2) return;
+      const current = this.state.selectedRobot;
+      const nextType = current?.type === 'hero' ? 'infantry' : 'hero';
+      const next = controllable.find(r => r.type === nextType) || controllable[0];
+      if (next === current) return;
+      if (current && current.team === 'red' && (current.type === 'hero' || current.type === 'infantry')) {
+        // 空格只交接控制权，不重置原机器人的位置、速度或朝向。
+        current.controlHandoffTimer = 0.2;
+      }
+      this.state.selectedRobot = next;
+      this.updateRobotList();
+      this.updateDetailPanel();
+      this.log(`空格切换控制：${next.name}`, 'info');
+    },
+
+    runSentryPreset(idx) {
+      const sentry = this.state.robots.find(r => r.team === 'red' && r.type === 'sentry');
+      if (!sentry || sentry.dead) { this.log('哨兵不可用', 'info'); return; }
+      sentry.sentryPresetCode = SENTRY_PRESETS[idx].code;
+      sentry._presetCode = null; // 强制重新编译
+      sentry._patrolIndex = 0; sentry._patrolWait = 0;
+      this.log(`红方哨兵执行预设${idx + 1}：${SENTRY_PRESETS[idx].name}`, 'info');
+      document.querySelectorAll('.preset-btn').forEach((btn, i) => btn.classList.toggle('active', i === idx));
+    },
+
+    openSentryEditor() {
+      const panel = document.getElementById('sentryEditorPanel');
+      panel.style.display = panel.style.display === 'none' ? 'block' : 'none';
+      if (panel.style.display !== 'none') this.loadSentryEditor();
+    },
+
+    loadSentryEditor() {
+      const box = document.getElementById('sentryEditorContent');
+      box.innerHTML = '';
+      SENTRY_PRESETS.forEach((preset, i) => {
+        const div = document.createElement('div');
+        div.className = 'preset-edit-block';
+        div.innerHTML = `
+          <div class="preset-edit-title">预设 ${i + 1}：${preset.name}</div>
+          <textarea id="preset-code-${i}" spellcheck="false">${preset.code}</textarea>
+          <button onclick="Game.savePresetCode(${i})">保存预设 ${i + 1}</button>
+          <button onclick="Game.runSentryPreset(${i})">立即执行</button>
+        `;
+        box.appendChild(div);
+      });
+    },
+
+    savePresetCode(idx) {
+      const code = document.getElementById(`preset-code-${idx}`).value;
+      SENTRY_PRESETS[idx].code = code;
+      const sentry = this.state.robots.find(r => r.team === 'red' && r.type === 'sentry');
+      if (sentry) sentry._presetCode = null; // force recompilation on next frame
+      this.log(`预设 ${idx + 1} 已保存`, 'info');
+    },
+
+    applyDamage(target, dmg, attacker) { target.takeDamage(dmg, attacker); },
+
+    isMajorAdvantage(team) {
+      return this.getTacticalSituation(team).advantage;
+    },
+
+    getTacticalSituation(team) {
+      const ownVP = team === 'red' ? this.state.redVP : this.state.blueVP;
+      const enemyVP = team === 'red' ? this.state.blueVP : this.state.redVP;
+      const ownActive = this.state.robots.filter(r => r.team === team && !r.dead && !r.disabled).length;
+      const enemyActive = this.state.robots.filter(r => r.team !== team && !r.dead && !r.disabled).length;
+      const vpDiff = ownVP - enemyVP;
+      const unitDiff = ownActive - enemyActive;
+      const advantage = vpDiff >= 50 && unitDiff >= 0;
+      const disadvantage = vpDiff <= -30 || unitDiff < 0;
+      return { ownVP, enemyVP, ownActive, enemyActive, vpDiff, unitDiff, advantage, disadvantage };
+    },
+
+    shouldPressureEnemySupply(robot) {
+      if (!this.isMajorAdvantage(robot.team) || this.state.controlOwner !== robot.team) return false;
+      const active = this.state.robots.filter(r => r.team === robot.team && !r.dead && !r.disabled);
+      // 仅指定一台前压，避免整队放弃已占领的控制区。
+      const order = { infantry: 0, hero: 1, sentry: 2 };
+      const pressureUnit = [...active].sort((a, b) => order[a.type] - order[b.type])[0];
+      return pressureUnit === robot;
+    },
+
+    onKill(target, attacker) {
+      this.log(`${target.name} 被击毁，5秒死亡倒计时后开始爬行修复`, target.team);
+      this.spawnParticles(target.x, target.y, '#ffa502', 12);
+      const vpPenalty = target.type === 'hero' ? 20 : (target.type === 'sentry' ? 15 : 10);
+      if (target.team === 'red') this.state.redVP = Math.max(0, this.state.redVP - vpPenalty);
+      else this.state.blueVP = Math.max(0, this.state.blueVP - vpPenalty);
+      if (attacker) {
+        attacker.kills += 1;
+        attacker.xp += target.type === 'hero' ? 80 : (target.type === 'sentry' ? 100 : 50);
+        const goldReward = GOLD_PER_KILL;
+        if (attacker.team === 'red') this.state.redGold += goldReward;
+        else this.state.blueGold += goldReward;
+      }
+    },
+
+    spawnParticles(x, y, color, count) {
+      for (let i = 0; i < count; i++) {
+        this.particles.push({ x, y, vx: U.rand(-40, 40), vy: U.rand(-40, 40), life: U.rand(0.3, 0.7), color, size: U.rand(1, 3) });
+      }
+    },
+
+    update(dt) {
+      if (this.state.over) return;
+      // 空格键在红方英雄与步兵之间切换控制，准备阶段也可切换。
+      if (Input.consume('space')) this.switchControlledRobot();
+      const inOpening = this.state.openingTime > 0;
+      // 在本帧先记录准备锁定状态，再递减计时器，避免最后一帧提前移动。
+      this.state.openingLocked = inOpening;
+      if (inOpening) {
+        this.state.openingTime = Math.max(0, this.state.openingTime - dt);
+        // 倒计时结束只解除开局驻留，不关闭或重置正在进行的弹药购买窗口。
+      } else {
+        this.state.time -= dt;
+        this.state.elapsedTime += dt;
+      }
+      if (this.state.time <= 0) { this.endMatch(); return; }
+      for (const r of this.state.robots) r.update(dt);
+      this.state.openingLocked = false;
+      BulletSys.update(this.state.bullets, dt);
+      this.particles = this.particles.filter(p => { p.life -= dt; p.x += p.vx * dt; p.y += p.vy * dt; return p.life > 0; });
+      if (!inOpening) this.updateEconomy(dt);
+      if (!inOpening) this.updateControlZone(dt);
+      this.updateAmmoSupply(dt);
+      if (this.state.redVP <= 0 || this.state.blueVP <= 0) { this.endMatch(); return; }
+      this.updateUI();
+    },
+
+    updateEconomy(dt) {
+      const reachedMinute = Math.floor(this.state.elapsedTime / 60);
+      while ((this.state.incomeMinutes || 0) < reachedMinute) {
+        this.state.incomeMinutes = (this.state.incomeMinutes || 0) + 1;
+        this.state.redGold += GOLD_PER_MINUTE;
+        this.state.blueGold += GOLD_PER_MINUTE;
+        this.log(`第 ${this.state.incomeMinutes} 分钟收入：双方各获得 ${GOLD_PER_MINUTE} 金币`, 'info');
+      }
+    },
+
+    updateAmmoSupply(dt) {
+      const order = ['infantry', 'sentry', 'hero'];
+      const sorted = [...this.state.robots].sort((a, b) => order.indexOf(a.type) - order.indexOf(b.type));
+      for (const r of sorted) {
+        if (r.dead || r.disabled || r.type === 'sentry') continue;
+        const sz = MapData.supplyZones.find(z => z.team === r.team);
+        const inSupply = r.inRect(sz);
+        if (!inSupply) {
+          r.isPurchasingAmmo = false;
+          continue;
+        }
+        // 我方玩家必须手动购买；准备阶段同样允许按 R 打开购买窗口。
+        // 敌方蓝队 AI 则在补给区内自动购弹。
+        r.isPurchasingAmmo = false;
+        if (r.isPlayerControlled() && Input.consume('r')) {
+          this.openAmmoPurchase(r.team);
+        } else if (r.team === 'blue') {
+          const teamGold = this.state.blueGold;
+          const reserve = r.type === 'infantry' ? 50 : 0;
+          if (r.ammo < r.ammoCapacity * 0.5 && teamGold > reserve) r.isPurchasingAmmo = true;
+        }
+        if (r.isPurchasingAmmo) this.purchaseAmmoContinuous(r, dt);
+      }
+    },
+
+    purchaseAmmoContinuous(r, dt) {
+      if (r.type === 'sentry' || !r.isPurchasingAmmo) return;
+      const need = r.ammoCapacity - r.ammo;
+      if (need <= 0) { r.isPurchasingAmmo = false; return; }
+      const teamGold = r.team === 'red' ? this.state.redGold : this.state.blueGold;
+      if (teamGold < r.ammoCost) { r.isPurchasingAmmo = false; return; }
+      r.ammoBuyAccumulator = (r.ammoBuyAccumulator || 0) + r.ammoBuyRate * dt;
+      const buy = Math.floor(r.ammoBuyAccumulator);
+      if (buy <= 0) return;
+      r.ammoBuyAccumulator -= buy;
+      const actualBuy = Math.min(buy, need, Math.floor(teamGold / r.ammoCost));
+      if (actualBuy <= 0) { r.isPurchasingAmmo = false; return; }
+      const cost = actualBuy * r.ammoCost;
+      if (r.team === 'red') this.state.redGold -= cost;
+      else this.state.blueGold -= cost;
+      r.ammo += actualBuy;
+      if (r.ammo >= r.ammoCapacity || (r.team === 'blue' && this.state.blueGold < r.ammoCost)) r.isPurchasingAmmo = false;
+    },
+
+    openAmmoPurchase(team = 'red') {
+      if (!this.state) return;
+      const selected = this.state.selectedRobot;
+      const supply = MapData.supplyZones.find(z => z.team === team);
+      if (!selected || selected.team !== team || (selected.type !== 'hero' && selected.type !== 'infantry') || !selected.inRect(supply)) {
+        this.log('只有位于己方补给区的英雄或步兵才能购买弹药', team);
+        return;
+      }
+      const robots = this.state.robots.filter(r => r.team === team && (r.type === 'hero' || r.type === 'infantry'));
+      const hero = robots.find(r => r.type === 'hero');
+      const infantry = robots.find(r => r.type === 'infantry');
+      if (!hero || !infantry) return;
+      const modal = document.getElementById('ammoPurchaseModal');
+      const heroInput = document.getElementById('heroAmmoBuy');
+      const infantryInput = document.getElementById('infantryAmmoBuy');
+      heroInput.value = 0; infantryInput.value = 0;
+      heroInput.max = Math.max(0, hero.ammoCapacity - hero.ammo);
+      infantryInput.max = Math.max(0, infantry.ammoCapacity - infantry.ammo);
+      this._ammoPurchaseTeam = team;
+      heroInput.oninput = () => this.updateAmmoPurchasePreview();
+      infantryInput.oninput = () => this.updateAmmoPurchasePreview();
+      this.updateAmmoPurchasePreview();
+      modal.style.display = 'flex';
+    },
+
+    addAmmoPurchase(type) {
+      if (!this.state || !this._ammoPurchaseTeam) return;
+      const input = document.getElementById(type === 'hero' ? 'heroAmmoBuy' : 'infantryAmmoBuy');
+      if (!input) return;
+      const step = type === 'hero' ? 1 : 10;
+      const max = Number(input.max) || 0;
+      input.value = Math.min(max, Math.max(0, (Number(input.value) || 0) + step));
+      this.updateAmmoPurchasePreview();
+    },
+
+    removeAmmoPurchase(type) {
+      if (!this.state || !this._ammoPurchaseTeam) return;
+      const input = document.getElementById(type === 'hero' ? 'heroAmmoBuy' : 'infantryAmmoBuy');
+      if (!input) return;
+      const step = type === 'hero' ? 1 : 10;
+      input.value = Math.max(0, (Number(input.value) || 0) - step);
+      this.updateAmmoPurchasePreview();
+    },
+
+    updateAmmoPurchasePreview() {
+      if (!this.state) return;
+      const team = this._ammoPurchaseTeam || 'red';
+      const hInput = document.getElementById('heroAmmoBuy');
+      const iInput = document.getElementById('infantryAmmoBuy');
+      const h = Math.max(0, Math.floor(Number(hInput?.value) || 0));
+      const i = Math.max(0, Math.floor(Number(iInput?.value) || 0));
+      const cost = h * HERO_AMMO_COST + i * INFANTRY_AMMO_COST;
+      const gold = team === 'red' ? this.state.redGold : this.state.blueGold;
+      const insufficient = cost > gold;
+      document.getElementById('ammoCostPreview').textContent = cost;
+      document.getElementById('ammoGold').textContent = Math.floor(gold);
+      hInput?.classList.toggle('insufficient', insufficient);
+      iInput?.classList.toggle('insufficient', insufficient);
+      document.getElementById('heroAmmoPlus')?.classList.toggle('insufficient', h * HERO_AMMO_COST + HERO_AMMO_COST > gold);
+      document.getElementById('infantryAmmoPlus')?.classList.toggle('insufficient', i * INFANTRY_AMMO_COST + 10 * INFANTRY_AMMO_COST > gold);
+      document.getElementById('ammoCostPreview')?.closest('.cost')?.classList.toggle('insufficient', insufficient);
+      document.getElementById('ammoInsufficientHint')?.classList.toggle('show', insufficient);
+    },
+
+    closeAmmoPurchase() {
+      const modal = document.getElementById('ammoPurchaseModal');
+      if (modal) modal.style.display = 'none';
+    },
+
+    confirmAmmoPurchase() {
+      if (!this.state) { this.closeAmmoPurchase(); return; }
+      const team = this._ammoPurchaseTeam || 'red';
+      const supply = MapData.supplyZones.find(z => z.team === team);
+      const selected = this.state.selectedRobot;
+      if (!selected || selected.team !== team || (selected.type !== 'hero' && selected.type !== 'infantry') || !selected.inRect(supply)) {
+        this.log('机器人已离开补给区，无法完成弹药购买', team);
+        this.closeAmmoPurchase();
+        return;
+      }
+      const hero = this.state.robots.find(r => r.team === team && r.type === 'hero');
+      const infantry = this.state.robots.find(r => r.team === team && r.type === 'infantry');
+      if (!hero || !infantry) return;
+      const h = Math.min(Math.max(0, Math.floor(Number(document.getElementById('heroAmmoBuy').value) || 0)), Math.max(0, hero.ammoCapacity - hero.ammo));
+      const i = Math.min(Math.max(0, Math.floor(Number(document.getElementById('infantryAmmoBuy').value) || 0)), Math.max(0, infantry.ammoCapacity - infantry.ammo));
+      const cost = h * HERO_AMMO_COST + i * INFANTRY_AMMO_COST;
+      const gold = team === 'red' ? this.state.redGold : this.state.blueGold;
+      if (cost <= 0) { this.log('请选择要购买的弹药数量', team); return; }
+      if (cost > gold) { this.log('金币不足，无法完成弹药购买', team); return; }
+      if (team === 'red') this.state.redGold -= cost; else this.state.blueGold -= cost;
+      hero.ammo += h; infantry.ammo += i;
+      hero.isPurchasingAmmo = false; infantry.isPurchasingAmmo = false;
+      this.log(`弹药购买成功：英雄 ${h} 发，步兵 ${i} 发，共 ${cost} 金币`, team);
+      this.closeAmmoPurchase();
+      this.updateUI();
+    },
+
+    updateControlZone(dt) {
+      const cz = MapData.controlZone;
+      const count = team => this.state.robots.filter(r =>
+        r.team === team && !r.dead && !r.disabled && r.fireBanTimer <= 0 && r.inRect(cz)
+      ).length;
+      const redCount = count('red');
+      const blueCount = count('blue');
+      const owner = this.state.controlOwner;
+
+      if (owner === 'red' && redCount > 0) {
+        // 红方仍在圈内时，即使蓝方也在，控制权与扣分均持续。
+        this.state.controlProgress = 0;
+        this.state.blueVP = Math.max(0, this.state.blueVP - dt);
+      } else if (owner === 'blue' && blueCount > 0) {
+        // 蓝方仍在圈内时，即使红方也在，控制权与扣分均持续。
+        this.state.controlProgress = 0;
+        this.state.redVP = Math.max(0, this.state.redVP - dt);
+      } else if (owner) {
+        // 仅原占领方完全离开时计时；敌方在圈内不会直接抢点。
+        this.state.controlProgress += dt;
+        if (this.state.controlProgress >= 2) {
+          this.state.controlOwner = null;
+          this.state.controlProgress = 0;
+        }
+      } else if ((redCount > 0) !== (blueCount > 0)) {
+        // 只有中立状态下，单方进入才能获得控制权。
+        this.state.controlOwner = redCount > 0 ? 'red' : 'blue';
+        this.state.controlProgress = 0;
+        this.log(`${this.state.controlOwner === 'red' ? '红方' : '蓝方'}占领控制区，开始扣除对方胜利点`, this.state.controlOwner);
+      } else {
+        this.state.controlProgress = 0;
+      }
+    },
+
+    endMatch() {
+      this.state.over = true;
+      let winner, reason;
+      if (this.state.redVP <= 0) { winner = 'blue'; reason = '红方胜利点归零'; }
+      else if (this.state.blueVP <= 0) { winner = 'red'; reason = '蓝方胜利点归零'; }
+      else if (this.state.redVP > this.state.blueVP) { winner = 'red'; reason = '时间结束胜利点更高'; }
+      else if (this.state.blueVP > this.state.redVP) { winner = 'blue'; reason = '时间结束胜利点更高'; }
+      else {
+        const redDmg = this.state.robots.filter(r => r.team === 'red').reduce((s, r) => s + r.totalDamageDealt, 0);
+        const blueDmg = this.state.robots.filter(r => r.team === 'blue').reduce((s, r) => s + r.totalDamageDealt, 0);
+        if (redDmg !== blueDmg) { winner = redDmg > blueDmg ? 'red' : 'blue'; reason = `胜利点相同，${U.teamName(winner)} 攻击伤害更高`; }
+        else {
+          const redHP = this.state.robots.filter(r => r.team === 'red' && !r.dead).reduce((s, r) => s + r.hp, 0);
+          const blueHP = this.state.robots.filter(r => r.team === 'blue' && !r.dead).reduce((s, r) => s + r.hp, 0);
+          winner = redHP >= blueHP ? 'red' : 'blue';
+          reason = '胜利点与攻击伤害均相同，总剩余血量更高';
+        }
+      }
+      this.state.winner = winner;
+      this.log(`对战结束：${U.teamName(winner)} 获胜！${reason}`, 'info');
+      this.showSettlement(winner, reason);
+    },
+
+    showSettlement(winner, reason) {
+      const modal = document.getElementById('settlementModal');
+      const title = document.getElementById('settlementTitle');
+      const reasonEl = document.getElementById('settlementReason');
+      const statsEl = document.getElementById('settlementStats');
+      title.textContent = `${U.teamName(winner)} 获胜`;
+      title.className = `settlement-title ${winner}`;
+      reasonEl.textContent = reason;
+
+      const redRobots = this.state.robots.filter(r => r.team === 'red');
+      const blueRobots = this.state.robots.filter(r => r.team === 'blue');
+      const redDmg = redRobots.reduce((s, r) => s + r.totalDamageDealt, 0);
+      const blueDmg = blueRobots.reduce((s, r) => s + r.totalDamageDealt, 0);
+      const redKills = redRobots.reduce((s, r) => s + r.kills, 0);
+      const blueKills = blueRobots.reduce((s, r) => s + r.kills, 0);
+      const redHP = redRobots.filter(r => !r.dead).reduce((s, r) => s + r.hp, 0);
+      const blueHP = blueRobots.filter(r => !r.dead).reduce((s, r) => s + r.hp, 0);
+
+      statsEl.innerHTML = `
+        <div class="settlement-stat"><div class="label">红方剩余 VP</div><div class="value">${Math.floor(this.state.redVP)}</div></div>
+        <div class="settlement-stat"><div class="label">蓝方剩余 VP</div><div class="value">${Math.floor(this.state.blueVP)}</div></div>
+        <div class="settlement-stat"><div class="label">红方伤害</div><div class="value">${redDmg}</div></div>
+        <div class="settlement-stat"><div class="label">蓝方伤害</div><div class="value">${blueDmg}</div></div>
+        <div class="settlement-stat"><div class="label">红方击杀</div><div class="value">${redKills}</div></div>
+        <div class="settlement-stat"><div class="label">蓝方击杀</div><div class="value">${blueKills}</div></div>
+        <div class="settlement-stat"><div class="label">红方剩余血量</div><div class="value">${redHP.toFixed(0)}</div></div>
+        <div class="settlement-stat"><div class="label">蓝方剩余血量</div><div class="value">${blueHP.toFixed(0)}</div></div>
+      `;
+      modal.style.display = 'flex';
+    },
+
+    loop(now) {
+      const dt = Number.isFinite(now) && Number.isFinite(this.lastTime) ? Math.min((now - this.lastTime) / 1000, 0.05) : 0.05;
+      this.lastTime = now;
+      this.update(dt);
+      this.draw();
+      this.loopId = requestAnimationFrame(t => this.loop(t));
+    },
+
+    draw() {
+      const ctx = this.ctx;
+      ctx.save();
+      ctx.scale(SCALE, SCALE);
+      ctx.clearRect(0, 0, LOGIC_W, LOGIC_H);
+      ctx.fillStyle = '#080c12'; ctx.fillRect(0, 0, LOGIC_W, LOGIC_H);
+      // 1m 浅灰色网格线（20逻辑单位 = 1m）
+      ctx.strokeStyle = 'rgba(160,160,160,0.18)'; ctx.lineWidth = 0.4;
+      ctx.beginPath();
+      for (let x = 0; x <= LOGIC_W; x += 20) { ctx.moveTo(x, 0); ctx.lineTo(x, LOGIC_H); }
+      for (let y = 0; y <= LOGIC_H; y += 20) { ctx.moveTo(0, y); ctx.lineTo(LOGIC_W, y); }
+      ctx.stroke();
+      // 场地中线（虚线）
+      ctx.strokeStyle = 'rgba(255,255,255,0.08)'; ctx.setLineDash([4, 4]);
+      ctx.beginPath(); ctx.moveTo(LOGIC_W / 2, 0); ctx.lineTo(LOGIC_W / 2, LOGIC_H); ctx.stroke(); ctx.setLineDash([]);
+
+      for (const w of MapData.walls) {
+        ctx.fillStyle = 'rgba(100,110,130,0.55)';
+        ctx.fillRect(w.x, w.y, w.w, w.h);
+        ctx.strokeStyle = 'rgba(180,190,210,0.6)'; ctx.lineWidth = 0.5;
+        ctx.strokeRect(w.x, w.y, w.w, w.h);
+      }
+      for (const sz of MapData.supplyZones) {
+        ctx.fillStyle = sz.team === 'red' ? 'rgba(255,71,87,0.12)' : 'rgba(46,134,222,0.12)';
+        ctx.fillRect(sz.x, sz.y, sz.w, sz.h);
+        ctx.strokeStyle = U.teamColor(sz.team); ctx.setLineDash([3, 3]); ctx.strokeRect(sz.x, sz.y, sz.w, sz.h); ctx.setLineDash([]);
+        ctx.fillStyle = U.teamColor(sz.team); ctx.font = '5px monospace'; ctx.fillText('补给区', sz.x + 6, sz.y + sz.h / 2 + 2);
+      }
+      const cz = MapData.controlZone;
+      const controlColor = this.state.controlOwner === 'red'
+        ? 'rgba(255,71,87,0.24)'
+        : (this.state.controlOwner === 'blue' ? 'rgba(46,134,222,0.24)' : 'rgba(255,255,255,0.10)');
+      ctx.fillStyle = controlColor;
+      ctx.fillRect(cz.x, cz.y, cz.w, cz.h);
+      ctx.strokeStyle = this.state.controlOwner ? U.teamColor(this.state.controlOwner) : 'rgba(255,255,255,0.45)';
+      ctx.lineWidth = 1.0;
+      ctx.strokeRect(cz.x, cz.y, cz.w, cz.h);
+      // 控制区交叉武器图标（X）
+      ctx.strokeStyle = 'rgba(255,255,255,0.7)';
+      ctx.lineWidth = 2;
+      ctx.beginPath();
+      ctx.moveTo(cz.x + 8, cz.y + 8); ctx.lineTo(cz.x + cz.w - 8, cz.y + cz.h - 8);
+      ctx.moveTo(cz.x + cz.w - 8, cz.y + 8); ctx.lineTo(cz.x + 8, cz.y + cz.h - 8);
+      ctx.stroke();
+      ctx.fillStyle = 'rgba(255,255,255,0.7)'; ctx.font = '5px monospace'; ctx.fillText('控制区', cz.x + 18, cz.y + cz.h / 2 + 3);
+      for (const b of this.state.bullets) {
+        ctx.fillStyle = b.type === '47mm' ? '#fff' : U.teamColor(b.team);
+        // 用沿初始方向的短直线表现高速弹丸，避免视觉上出现弯曲或追踪效果。
+        const trail = b.type === '47mm' ? 5 : 3.5;
+        ctx.strokeStyle = ctx.fillStyle;
+        ctx.lineWidth = b.type === '47mm' ? 1.6 : 1.1;
+        ctx.beginPath();
+        ctx.moveTo(b.x - b.dirX * trail, b.y - b.dirY * trail);
+        ctx.lineTo(b.x + b.dirX * 1.5, b.y + b.dirY * 1.5);
+        ctx.stroke();
+      }
+      for (const r of this.state.robots) { this.drawRobot(r); }
+      for (const p of this.particles) { ctx.globalAlpha = U.clamp(p.life / 0.5, 0, 1); ctx.fillStyle = p.color; ctx.fillRect(p.x - p.size / 2, p.y - p.size / 2, p.size, p.size); }
+      ctx.globalAlpha = 1;
+      if (this.state.openingTime > 0) {
+        const remain = Math.ceil(this.state.openingTime);
+        ctx.fillStyle = 'rgba(0,0,0,0.28)';
+        ctx.fillRect(0, 0, LOGIC_W, LOGIC_H);
+        ctx.textAlign = 'center';
+        ctx.textBaseline = 'middle';
+        ctx.fillStyle = '#00eaff';
+        ctx.font = 'bold 22px monospace';
+        ctx.fillText(String(remain), LOGIC_W / 2, LOGIC_H / 2 - 5);
+        ctx.fillStyle = 'rgba(255,255,255,0.9)';
+        ctx.font = 'bold 6px monospace';
+        ctx.fillText('准备阶段', LOGIC_W / 2, LOGIC_H / 2 + 12);
+      }
+      ctx.restore();
+    },
+
+    drawRobot(r) {
+      const ctx = this.ctx;
+      const isSelected = this.state.selectedRobot === r;
+      const lift = r.airZ || 0;
+
+      // 跳跃时：先绘制地面投影，再将机器人整体抬高渲染
+      ctx.save();
+      if (lift > 0) {
+        ctx.globalAlpha = 0.35;
+        ctx.fillStyle = 'rgba(0,0,0,0.45)';
+        ctx.beginPath(); ctx.ellipse(r.x + 1, r.y + r.size * 0.6, r.size * 0.9, r.size * 0.32, 0, 0, Math.PI * 2); ctx.fill();
+        ctx.globalAlpha = 1;
+        ctx.translate(0, -lift);
+      }
+
+      // 选中高亮
+      if (isSelected && !r.dead) {
+        ctx.strokeStyle = '#fff'; ctx.lineWidth = 2;
+        ctx.beginPath(); ctx.arc(r.x, r.y, r.size * r.hitScale + 4, 0, Math.PI * 2); ctx.stroke();
+      }
+
+      // 自转模式外圈光环
+      if (r.spinMode && !r.dead) {
+        const time = Game.state.time * 4;
+        ctx.strokeStyle = 'rgba(0,234,255,0.6)'; ctx.lineWidth = 2;
+        ctx.setLineDash([4, 4]);
+        ctx.beginPath();
+        ctx.arc(r.x, r.y, r.size * 1.8, time, time + Math.PI * 1.5);
+        ctx.stroke();
+        ctx.setLineDash([]);
+      }
+
+      // 团队色外圈
+      ctx.strokeStyle = U.teamColor(r.team); ctx.lineWidth = 2;
+      ctx.beginPath(); ctx.arc(r.x, r.y, r.size * r.hitScale + 1, 0, Math.PI * 2); ctx.stroke();
+
+      // 阴影
+      ctx.fillStyle = 'rgba(0,0,0,0.35)';
+      ctx.beginPath(); ctx.ellipse(r.x + 1, r.y + r.size * 0.6, r.size, r.size * 0.4, 0, 0, Math.PI * 2); ctx.fill();
+
+      ctx.save(); ctx.translate(r.x, r.y); ctx.rotate(r.angle);
+
+      // 按类型绘制几何外观
+      if (r.shape === 'rect') {
+        // 英雄：长方形
+        ctx.fillStyle = r.dead ? '#333' : (r.disabled ? '#666' : r.color);
+        ctx.fillRect(-r.size, -r.size * 0.55, r.size * 2, r.size * 1.1);
+        ctx.strokeStyle = r.disabled ? '#999' : '#fff'; ctx.lineWidth = 1;
+        ctx.strokeRect(-r.size, -r.size * 0.55, r.size * 2, r.size * 1.1);
+      } else if (r.shape === 'circle') {
+        // 步兵：圆形
+        ctx.fillStyle = r.dead ? '#333' : (r.disabled ? '#666' : r.color);
+        ctx.beginPath(); ctx.arc(0, 0, r.size, 0, Math.PI * 2); ctx.fill();
+        ctx.strokeStyle = r.disabled ? '#999' : '#fff'; ctx.lineWidth = 1; ctx.stroke();
+      } else if (r.shape === 'triangle') {
+        // 哨兵：三角形
+        ctx.fillStyle = r.dead ? '#333' : (r.disabled ? '#666' : r.color);
+        ctx.beginPath();
+        ctx.moveTo(r.size * 0.9, 0);
+        ctx.lineTo(-r.size * 0.6, -r.size * 0.7);
+        ctx.lineTo(-r.size * 0.6, r.size * 0.7);
+        ctx.closePath();
+        ctx.fill();
+        ctx.strokeStyle = r.disabled ? '#999' : '#fff'; ctx.lineWidth = 1; ctx.stroke();
+      }
+
+      // 类型标识 H / I / S（瘫痪状态显示 DIS）
+      ctx.fillStyle = r.disabled ? '#ff4757' : 'rgba(255,255,255,0.9)'; ctx.font = `bold ${Math.max(4, r.size * 0.9)}px monospace`;
+      ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+      const bodyLabel = r.disabled ? 'DIS' : (r.locked ? 'LOCK' : (r.type === 'hero' ? 'H' : (r.type === 'infantry' ? 'I' : 'S')));
+      ctx.fillStyle = (r.disabled || r.locked) ? '#ff4757' : 'rgba(255,255,255,0.9)';
+      ctx.font = `bold ${bodyLabel === 'LOCK' ? Math.max(3, r.size * 0.62) : Math.max(4, r.size * 0.9)}px monospace`;
+      ctx.fillText(bodyLabel, 0, 0);
+      ctx.textAlign = 'start'; ctx.textBaseline = 'alphabetic';
+
+      ctx.restore();
+
+      // 文字标签：直接显示单位类型，避免只能依靠形状或 H/I/S 字母判断。
+      const typeLabel = r.type === 'hero' ? '英雄' : (r.type === 'infantry' ? '步兵' : '哨兵');
+      ctx.save();
+      ctx.font = 'bold 5px sans-serif';
+      ctx.textAlign = 'center';
+      ctx.textBaseline = 'middle';
+      ctx.lineWidth = 2;
+      ctx.strokeStyle = 'rgba(0,0,0,0.8)';
+      ctx.fillStyle = r.disabled ? '#ff4757' : '#ffffff';
+      const typeY = r.y - r.size - 15;
+      ctx.strokeText(typeLabel, r.x, typeY);
+      ctx.fillText(typeLabel, r.x, typeY);
+      ctx.restore();
+
+      // 装甲板可视化（金色窄条，自转模式更亮）
+      if (!r.dead) {
+        const plates = r.getArmorPlates();
+        for (const p of plates) {
+          ctx.strokeStyle = r.spinMode ? '#ffd700' : '#ffaa00';
+          ctx.lineWidth = p.thickness * 1.4;
+          ctx.lineCap = 'round';
+          ctx.beginPath(); ctx.moveTo(p.x1, p.y1); ctx.lineTo(p.x2, p.y2); ctx.stroke();
+          ctx.lineCap = 'butt';
+        }
+      }
+
+      // 炮管（瘫痪/战亡时不显示）
+      if (!r.dead && !r.disabled) {
+        ctx.save(); ctx.translate(r.x, r.y); ctx.rotate(r.aimAngle);
+        ctx.fillStyle = r.team === 'red' ? '#7c1e1e' : '#1e4a7c';
+        const barrelLen = r.type === 'hero' ? r.size + 5 : (r.type === 'sentry' ? r.size + 3 : r.size + 2);
+        ctx.fillRect(0, -2, barrelLen, 4);
+        ctx.restore();
+      }
+
+      // 死亡状态：显示倒计时，无法行动
+      if (r.dead) {
+        ctx.globalAlpha = 0.35;
+        ctx.fillStyle = '#333';
+        ctx.beginPath(); ctx.arc(r.x, r.y, r.size, 0, Math.PI * 2); ctx.fill();
+        ctx.globalAlpha = 1;
+        ctx.fillStyle = '#ff4757'; ctx.font = 'bold 7px monospace';
+        ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+        ctx.fillText(`${Math.ceil(r.deathTimer)}`, r.x, r.y);
+        ctx.textAlign = 'start'; ctx.textBaseline = 'alphabetic';
+        ctx.restore();
+        return;
+      }
+
+      const bw = r.size * 2 + 6, bh = 2;
+      const bx = r.x - bw / 2, by = r.y - r.size - 10;
+      ctx.fillStyle = '#222'; ctx.fillRect(bx, by, bw, bh);
+      ctx.fillStyle = r.hp / r.maxHp > 0.4 ? '#2ed573' : '#ff4757';
+      ctx.fillRect(bx, by, bw * (r.hp / r.maxHp), bh);
+
+      ctx.fillStyle = '#222'; ctx.fillRect(bx, by + 3, bw, bh);
+      ctx.fillStyle = r.heat / r.heatLimit > 0.8 ? '#ff4757' : '#ffa502';
+      ctx.fillRect(bx, by + 3, bw * (r.heat / r.heatLimit), bh);
+
+      let label2 = '';
+      if (r.fireBanTimer > 0) label2 = 'BAN';
+      else if (r.invincible) label2 = 'INV';
+      else if (r.spinMode) label2 = 'SPIN';
+      if (label2) {
+        ctx.fillStyle = r.fireBanTimer > 0 ? '#ffa502' : '#00eaff';
+        ctx.font = 'bold 4px monospace';
+        ctx.fillText(label2, bx, by - 2);
+      }
+      ctx.restore();
+    },
+
+    updateUI() {
+      document.getElementById('redScore').textContent = Math.floor(this.state.redVP);
+      document.getElementById('blueScore').textContent = Math.floor(this.state.blueVP);
+      document.getElementById('centerRedVp').textContent = Math.floor(this.state.redVP);
+      document.getElementById('centerBlueVp').textContent = Math.floor(this.state.blueVP);
+      document.getElementById('redGold').textContent = Math.floor(this.state.redGold);
+      document.getElementById('blueGold').textContent = Math.floor(this.state.blueGold);
+      document.getElementById('gameTime').textContent = this.state.openingTime > 0
+        ? `准备 ${Math.ceil(this.state.openingTime)}s`
+        : U.formatTime(Math.max(0, this.state.time));
+      // 同步机器人状态，避免死亡/瘫痪/修复后的列表显示残留
+      this.updateRobotList();
+      this.updateDetailPanel();
+    },
+
+    updateRobotList() {
+      const box = document.getElementById('robotList');
+      box.innerHTML = '';
+      for (const r of this.state.robots) {
+        if (r.team !== 'red') continue;
+        const div = document.createElement('div');
+        const isSentry = r.type === 'sentry';
+        div.dataset.robotId = r.id;
+        div.className = `robot-row ${this.state.selectedRobot === r ? 'selected' : ''} ${r.dead ? 'dead' : ''} ${r.disabled ? 'disabled' : ''} ${isSentry ? 'sentry' : ''}`;
+        div.innerHTML = `<div class="robot-icon" style="background:${r.dead ? '#333' : (r.disabled ? '#666' : r.color)}"></div>
+          <div class="robot-info">
+            <div class="robot-name">${r.name}${isSentry ? ' [预设控制]' : ''}${r.dead ? ' [死亡' + Math.ceil(r.deathTimer) + 's]' : (r.disabled ? ' [瘫痪]' : (r.isPurchasingAmmo ? ' [补弹]' : ''))}</div>
+            <div class="bar-mini"><span style="width:${(r.hp / r.maxHp * 100)}%;background:${r.hp / r.maxHp > 0.4 ? '#2ed573' : '#ff4757'}"></span></div>
+          </div>`;
+        box.appendChild(div);
+      }
+    },
+
+    updateDetailPanel() {
+      const r = this.state.selectedRobot;
+      const el = document.getElementById('detailContent');
+      if (!r) { el.innerHTML = '<div class="stat-row"><span class="label">点击左侧机器人选中</span></div>'; return; }
+      const op = r.getOverpowerRatio();
+      const status = r.dead ? `死亡倒计时 ${Math.ceil(r.deathTimer)}s` : (r.disabled ? '瘫痪待修' : (r.fireBanTimer > 0 ? '禁火' : (r.invincible ? '无敌' : (r.spinMode ? '自转中' : '正常'))));
+      el.innerHTML = `
+        <div class="stat-row"><span class="label">单位类型</span><span class="value" style="color:${r.color}">${r.type === 'hero' ? '英雄' : (r.type === 'infantry' ? '步兵' : '哨兵')}</span></div>
+        <div class="stat-row"><span class="label">单位名称</span><span class="value" style="color:${r.color}">${r.name}</span></div>
+        <div class="stat-row"><span class="label">状态</span><span class="value" style="color:${r.dead ? '#ff4757' : (r.disabled ? '#ff4757' : (r.fireBanTimer > 0 ? '#ffa502' : (r.invincible ? '#00eaff' : (r.spinMode ? '#00eaff' : '#2ed573'))))}">${status}</span></div>
+        <div class="big-bar"><span style="width:${(r.hp / r.maxHp * 100)}%;background:${r.hp / r.maxHp > 0.4 ? '#2ed573' : '#ff4757'}"></span></div>
+        <div class="stat-row"><span class="label">血量</span><span class="value">${Math.floor(r.hp)}/${r.maxHp}</span></div>
+        <div class="big-bar"><span style="width:${(r.heat / r.heatLimit * 100)}%;background:${r.heat / r.heatLimit > 0.8 ? '#ff4757' : '#ffa502'}"></span></div>
+        <div class="stat-row"><span class="label">枪管温度</span><span class="value">${Math.floor(r.heat)}/${r.heatLimit}${r.locked ? ' [锁定]' : ''}</span></div>
+        <div class="stat-row"><span class="label">射击冷却</span><span class="value">${Math.max(0, r.cooldown).toFixed(2)}s</span></div>
+        <div class="stat-row"><span class="label">点射冷却</span><span class="value">${Math.max(0, r.burstTimer).toFixed(2)}s</span></div>
+        <div class="stat-row"><span class="label">功率负载</span><span class="value ${op > 0 ? 'overpower' : ''}">${r.power}/${r.powerLimit}W ${op > 0 ? '(超功率)' : ''}</span></div>
+        <div class="stat-row"><span class="label">缓冲能量</span><span class="value">${Math.floor(r.bufferEnergy)}/${r.maxBufferEnergy} J</span></div>
+        <div class="stat-row"><span class="label">弹药</span><span class="value">${r.type === 'sentry' ? '∞' : `${Math.floor(r.ammo)}/${r.ammoCapacity}`} ${r.bulletType}${r.isPurchasingAmmo ? ' [补弹中]' : ''}</span></div>
+        <div class="stat-row"><span class="label">高度</span><span class="value">${r.totalHeight.toFixed(0)}mm</span></div>
+        <div class="stat-row"><span class="label">受弹缩放</span><span class="value">${r.hitScale.toFixed(2)}x</span></div>
+        <div class="stat-row"><span class="label">移速</span><span class="value">${r.getEffectiveSpeed().toFixed(2)} m/s</span></div>
+        <div class="stat-row"><span class="label">射速</span><span class="value">${r.getEffectiveROF().toFixed(1)} 发/s</span></div>
+        <div class="stat-row"><span class="label">自瞄模块</span><span class="value">${r.autoAim ? '已启用（自动瞄准/主动开火，子弹不追踪）' : '未装备'}</span></div>
+      `;
+    },
+
+    log(msg, type = 'info') {
+      const el = document.getElementById('logPanel');
+      const cls = type === 'red' ? 'log-red' : (type === 'blue' ? 'log-blue' : (type === 'gold' ? 'log-gold' : 'log-info'));
+      const line = document.createElement('div');
+      line.className = cls;
+      line.textContent = `[${U.formatTime(Math.max(0, this.state.time))}] ${msg}`;
+      el.appendChild(line);
+      el.scrollTop = el.scrollHeight;
+      while (el.children.length > 50) el.removeChild(el.firstChild);
+    }
+  };
+
+  window.onload = () => Game.init();
+  </script>
+</body>
+</html>

@@ -1,0 +1,60 @@
+@font-face {
+  font-family: 'Geist';
+  src: url('/fonts/geist-latin.woff2') format('woff2');
+  font-weight: 100 900;
+  font-style: normal;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: 'Geist Mono';
+  src: url('/fonts/geist-mono-latin.woff2') format('woff2');
+  font-weight: 100 900;
+  font-style: normal;
+  font-display: swap;
+}
+
+:root {
+  /* 基地色：冷调金属黑 */
+  --ink-0: #05070a;
+  --ink-1: #090d13;
+  --ink-2: #0d131b;
+  --ink-3: #121a24;
+
+  /* 装甲线 */
+  --line-1: #1a222d;
+  --line-2: #26313f;
+  --line-3: #364454;
+
+  /* 文字 */
+  --tx-0: #f1f5fa;
+  --tx-1: #a3b0c0;
+  --tx-2: #66727f;
+
+  /* RoboMaster 官方红蓝 */
+  --rm-red: #ff3333;
+  --rm-red-soft: rgba(255, 51, 51, 0.12);
+  --rm-blue: #3399cc;
+  --rm-blue-bright: #5cbfea;
+  --rm-blue-soft: rgba(51, 153, 204, 0.12);
+
+  --font-display: 'Geist', 'PingFang SC', 'HarmonyOS Sans SC', 'Microsoft YaHei', system-ui, sans-serif;
+  --font-mono: 'Geist Mono', ui-monospace, 'Cascadia Mono', 'Consolas', monospace;
+
+  --cut-sm: 8px;
+  --cut-md: 14px;
+  --cut-lg: 22px;
+
+  --shell: min(1280px, 92vw);
+  --header-h: 68px;
+
+  /* 动效：统一用慢起快收的长尾缓动，位移小、时长偏长，观感才不"弹" */
+  --ease-out: cubic-bezier(0.16, 1, 0.3, 1);
+  --ease-soft: cubic-bezier(0.22, 1, 0.36, 1);
+  --ease-inout: cubic-bezier(0.65, 0, 0.35, 1);
+  /* 入场专用：比 --ease-out 起手缓，中段不抢，尾段留得长，落位不生硬 */
+  --ease-reveal: cubic-bezier(0.25, 0.46, 0.45, 0.94);
+  --dur-1: 0.24s;
+  --dur-2: 0.48s;
+  --dur-3: 0.78s;
+}
