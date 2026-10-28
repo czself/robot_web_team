@@ -5,9 +5,7 @@ import { links, recruitment, team } from '@/data/site'
 
 <template>
   <footer class="ft">
-    <span class="ft__bg mono" aria-hidden="true" v-parallax="{ speed: 0.05, clamp: 36 }"
-      >YZ CONTROL</span
-    >
+    <span class="ft__bg mono" aria-hidden="true">YZ CONTROL</span>
 
     <div class="shell ft__inner" v-reveal>
       <div class="ft__row">
@@ -38,22 +36,31 @@ import { links, recruitment, team } from '@/data/site'
   position: relative;
   isolation: isolate;
   overflow: hidden;
-  padding: clamp(34px, 4.4vw, 54px) 0 22px;
+  /* 上下内边距必须相等：水印与内容都按页脚盒子居中，
+     一旦上下不等（之前是上 10 / 下 22），居中基准就和视觉重心错开 6px */
+  padding: 16px 0;
   border-top: 1px solid var(--line-1);
   background: var(--ink-0);
 }
 
-/* 背景板：队名压底，信息浮在其上 */
+/* 背景板：队名居中于页脚，信息浮在其上 */
 .ft__bg {
   position: absolute;
   left: 0;
   right: 0;
-  bottom: 10px;
+  /* 不再压到底部，改成落在页脚的垂直中线上，上下留白才均匀 */
+  top: 50%;
+  /* line-height:1 时盒子高正好 1em，上移略少于半字高：
+     等宽字体的大写字形视觉中心比盒子几何中心高约 0.06em，
+     取 0.46em 才能让字形（而非盒子）真正居中 */
+  margin-top: -0.46em;
   z-index: 0;
   text-align: center;
   font-size: clamp(30px, 8.6vw, 124px);
   line-height: 1;
   letter-spacing: 0.02em;
+  /* letter-spacing 会在末字符后也留一份间距，使字形整体偏左半个间距，这里补回来 */
+  padding-left: 0.02em;
   white-space: nowrap;
   color: rgba(152, 176, 202, 0.12);
   pointer-events: none;
@@ -141,7 +148,7 @@ import { links, recruitment, team } from '@/data/site'
 
 @media (max-width: 760px) {
   .ft {
-    padding-top: 30px;
+    padding: 12px 0;
   }
   .ft__row {
     flex-direction: column;

@@ -67,7 +67,7 @@ onUnmounted(() => {
         </p>
 
         <div class="hero__actions hero__in" style="--d: 700ms">
-          <MechaButton to="/join" variant="red" size="lg">报名加入</MechaButton>
+          <MechaButton to="/join" variant="red" size="lg">加入我们</MechaButton>
           <MechaButton to="/history" variant="ghost" size="lg">查看队史</MechaButton>
         </div>
 
