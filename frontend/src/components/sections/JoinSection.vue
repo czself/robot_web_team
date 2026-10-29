@@ -21,24 +21,37 @@ const errors = reactive<Record<string, string>>({})
 const submitting = ref(false)
 const notice = ref<{ ok: boolean; message: string } | null>(null)
 
+/* 与后端 SignRequest 的 @Size(max = 5) 对齐 */
+const MAX_GROUPS = 5
+
 const toggleGroup = (group: string) => {
   const i = form.groups.indexOf(group)
-  if (i >= 0) form.groups.splice(i, 1)
-  else form.groups.push(group)
+  if (i >= 0) {
+    form.groups.splice(i, 1)
+  } else if (form.groups.length >= MAX_GROUPS) {
+    // 组别数量到顶，先提示再放弃本次选中，不做静默忽略
+    errors.groups = `组别最多选择 ${MAX_GROUPS} 个`
+    return
+  } else {
+    form.groups.push(group)
+  }
   if (errors.groups) delete errors.groups
 }
 
 const validate = () => {
-  ;['name', 'studentId', 'department', 'major', 'grade', 'qq'].forEach((k) => delete errors[k])
+  ;['name', 'studentId', 'department', 'major', 'grade', 'qq', 'groups'].forEach((k) => delete errors[k])
   if (!form.name.trim()) errors.name = '请填写姓名'
   if (!form.studentId.trim()) errors.studentId = '请填写学号'
-  else if (!/^\d{6,14}$/.test(form.studentId.trim())) errors.studentId = '学号应为 6–14 位数字'
+  // 后端收紧为 ^\d{10}$，这里必须一致，否则 user 能提交出去再被退回
+  else if (!/^\d{10}$/.test(form.studentId.trim())) errors.studentId = '学号应为 10 位数字'
   if (!form.department.trim()) errors.department = '请填写所在学院'
   if (!form.major.trim()) errors.major = '请填写专业'
   if (!form.grade) errors.grade = '请选择年级'
+  // 与后端 SignRequest 的 QQ 校验保持一致：5–12 位数字，且首位不能为 0
   if (!form.qq.trim()) errors.qq = '请填写 QQ 号'
-  else if (!/^\d{5,12}$/.test(form.qq.trim())) errors.qq = 'QQ 号应为 5–12 位数字'
-  if (form.groups.length === 0) errors.groups = '请至少选择一个意向组别'
+  else if (!/^[1-9]\d{4,11}$/.test(form.qq.trim())) errors.qq = 'QQ 号应为 5–12 位数字'
+  if (form.groups.length === 0) errors.groups = '请至少选择一个组别'
+  else if (form.groups.length > MAX_GROUPS) errors.groups = `组别最多选择 ${MAX_GROUPS} 个`
   return Object.keys(errors).length === 0
 }
 
@@ -47,10 +60,26 @@ const onSubmit = async () => {
   if (!validate()) return
   submitting.value = true
   try {
-    notice.value = await submitApplication({ ...form })
+    const result = await submitApplication({ ...form })
+    notice.value = result
+    // 提交成功后清空，避免同一份信息被重复提交
+    if (result.ok) resetForm()
   } finally {
     submitting.value = false
   }
+}
+
+const resetForm = () => {
+  form.name = ''
+  form.studentId = ''
+  form.department = ''
+  form.major = ''
+  form.grade = ''
+  form.qq = ''
+  form.groups = []
+  form.experience = ''
+  form.intro = ''
+  Object.keys(errors).forEach((k) => delete errors[k])
 }
 </script>
 
@@ -75,6 +104,7 @@ const onSubmit = async () => {
                     v-model="form.name"
                     class="field__input cut-a"
                     type="text"
+                    maxlength="32"
                     placeholder="你的姓名"
                     :aria-invalid="!!errors.name"
                   />
@@ -88,7 +118,8 @@ const onSubmit = async () => {
                     class="field__input cut-a"
                     type="text"
                     inputmode="numeric"
-                    placeholder="用于核对在校身份"
+                    maxlength="10"
+                    placeholder="10 位学号"
                     :aria-invalid="!!errors.studentId"
                   />
                   <span v-if="errors.studentId" class="field__error">{{ errors.studentId }}</span>
@@ -102,6 +133,7 @@ const onSubmit = async () => {
                     v-model="form.department"
                     class="field__input cut-a"
                     type="text"
+                    maxlength="64"
                     placeholder="填写所在学院全称"
                     :aria-invalid="!!errors.department"
                   />
@@ -128,6 +160,7 @@ const onSubmit = async () => {
                   v-model="form.major"
                   class="field__input cut-a"
                   type="text"
+                  maxlength="64"
                   placeholder="如：软件工程"
                   :aria-invalid="!!errors.major"
                 />
@@ -141,6 +174,7 @@ const onSubmit = async () => {
                   class="field__input cut-a"
                   type="text"
                   inputmode="numeric"
+                  maxlength="12"
                   placeholder="我们通过这个联系你"
                   :aria-invalid="!!errors.qq"
                 />
@@ -148,7 +182,7 @@ const onSubmit = async () => {
               </label>
 
               <div class="field">
-                <span class="field__label">意向组别 <i>*</i>（可多选）</span>
+                <span class="field__label">意向组别 <i>*</i>（可多选，最多 {{ MAX_GROUPS }} 个）</span>
                 <div class="chips">
                   <button
                     v-for="g in recruitment.groups"
@@ -183,11 +217,17 @@ const onSubmit = async () => {
               </div>
 
               <label class="field">
-                <span class="field__label">自我介绍 / 作品链接</span>
+                <span class="field__head">
+                  <span class="field__label">自我介绍 / 作品链接</span>
+                  <span class="field__count" :class="{ 'is-near': form.intro.length > 450 }">
+                    {{ form.intro.length }} / 500
+                  </span>
+                </span>
                 <textarea
                   v-model="form.intro"
                   class="field__input field__textarea cut-a"
                   rows="4"
+                  maxlength="500"
                   placeholder="做过什么、想做什么都行，没有也可以不填"
                 ></textarea>
               </label>
@@ -270,6 +310,28 @@ const onSubmit = async () => {
   font-size: 12.5px;
   letter-spacing: 0.04em;
   color: var(--tx-1);
+}
+
+/* 标签行：左侧说明 + 右侧字数计数 */
+.field__head {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.field__count {
+  font-family: var(--font-mono);
+  font-size: 11px;
+  letter-spacing: 0.06em;
+  color: var(--tx-2);
+  font-variant-numeric: tabular-nums;
+  transition: color 0.3s ease;
+}
+
+/* 接近上限时转红，提示还能写多少 */
+.field__count.is-near {
+  color: var(--rm-red);
 }
 
 .field__label i {
