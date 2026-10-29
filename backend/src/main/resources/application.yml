@@ -1,0 +1,15 @@
+server:
+  port: 8080
+
+spring:
+  profiles:
+    active: dev
+  web:
+    resources:
+      add-mappings: false
+
+mybatis-flex:
+  global-config:
+    normal-value-of-logic-delete: 1
+    deleted-value-of-logic-delete: 0
+    logic-delete-column: valid
